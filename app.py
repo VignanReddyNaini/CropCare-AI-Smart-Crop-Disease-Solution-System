@@ -21,9 +21,8 @@ app.secret_key = os.environ.get("SECRET_KEY", "kisaanseva-2025-hackathon-secret"
 
 # ─── Folders ──────────────────────────────────────────────────────────────────
 UPLOAD_FOLDER = "static/uploads"
-AUDIO_FOLDER  = "static/audio"
 DB_PATH       = "kisaanseva.db"
-for d in [UPLOAD_FOLDER, AUDIO_FOLDER, "static/icons"]:
+for d in [UPLOAD_FOLDER, "static/icons"]:
     os.makedirs(d, exist_ok=True)
 
 # ─── API Keys ─────────────────────────────────────────────────────────────────
@@ -548,14 +547,24 @@ def call_ai(prompt, image_path=None, original_filename="image.jpg", system_msg=N
         return None
 
 def generate_gtts_audio(text, lang_code):
+    """
+    Generate TTS audio entirely in memory and return a base64 data URL.
+    This avoids any disk writes — safe for Render's ephemeral filesystem.
+    """
     try:
         from gtts import gTTS
-        clean = re.sub(r'[\U00010000-\U0010ffff]','',text)
-        clean = re.sub(r'[\n\r]+',' . ',clean).strip()[:2200]
-        path  = os.path.join(AUDIO_FOLDER, str(uuid.uuid4()) + ".mp3")
-        gTTS(text=clean, lang=lang_code if lang_code in ["en","hi","te","ta","kn","mr","gu","pa","bn","ml"] else "en", slow=False).save(path)
-        return path
-    except:
+        import io
+        clean = re.sub(r'[\U00010000-\U0010ffff]', '', text)
+        clean = re.sub(r'[\n\r]+', ' . ', clean).strip()[:2200]
+        supported = ["en","hi","te","ta","kn","mr","gu","pa","bn","ml"]
+        tts = gTTS(text=clean, lang=lang_code if lang_code in supported else "en", slow=False)
+        buf = io.BytesIO()
+        tts.write_to_fp(buf)
+        buf.seek(0)
+        b64 = base64.b64encode(buf.read()).decode("utf-8")
+        return "data:audio/mpeg;base64," + b64
+    except Exception as e:
+        print("gTTS ERROR:", e)
         return None
 
 # ─── AGMARKNET live prices via data.gov.in API ────────────────────────────────
@@ -861,8 +870,8 @@ def index():
                     soil_types=SOIL_TYPES, error=error, result=None, image=None,
                     audio_url=None, crop_name=crop, location_city=city, user=user)
 
-        audio_path = generate_gtts_audio(result, lang) if result else None
-        audio_url  = "/" + audio_path.replace("\\","/") if audio_path else None
+        # Returns a base64 data URL directly — no disk file needed (safe for Render)
+        audio_url = generate_gtts_audio(result, lang) if result else None
 
         db = get_db()
         db.execute("INSERT INTO scan_history (user_id,session_id,crop,result,image_path,lang) VALUES (?,?,?,?,?,?)",
