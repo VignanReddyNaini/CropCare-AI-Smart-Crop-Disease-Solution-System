@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Login — KisaanSeva{% endblock %}
+
+{% block extra_head %}
+<style>
+.auth-wrap {
+  min-height: calc(100vh - 60px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(160deg, var(--leaf-mist) 0%, var(--cream) 60%);
+}
+.auth-card {
+  background: white; border: 1px solid var(--leaf-pale);
+  border-radius: var(--r-lg); box-shadow: var(--sh-lg);
+  width: 100%; max-width: 420px; overflow: hidden;
+}
+.auth-header {
+  background: linear-gradient(135deg, var(--leaf), var(--leaf-lt));
+  padding: 2rem 2rem 1.5rem; text-align: center; color: white;
+}
+.auth-header .logo { font-size: 2.5rem; margin-bottom: .5rem; display: block; }
+.auth-header h2 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; margin-bottom: .25rem; }
+.auth-header p  { opacity: .8; font-size: .82rem; }
+.auth-body { padding: 1.75rem 2rem; }
+
+.role-toggle {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: .5rem; margin-bottom: 1.5rem;
+}
+.role-btn {
+  padding: .75rem; border-radius: var(--r); border: 2px solid var(--leaf-pale);
+  background: var(--gray1); font-size: .85rem; font-weight: 700; cursor: pointer;
+  text-align: center; transition: all .2s; color: var(--gray3);
+}
+.role-btn:hover { border-color: var(--leaf); color: var(--leaf); background: var(--leaf-mist); }
+.role-btn.active { border-color: var(--leaf); background: var(--leaf); color: white; }
+.role-btn .role-icon { display: block; font-size: 1.4rem; margin-bottom: .25rem; }
+.role-btn .role-sub  { font-size: .65rem; font-weight: 500; opacity: .8; }
+
+.form-field { margin-bottom: 1rem; }
+.form-field label { display: block; font-size: .7rem; font-weight: 700; color: var(--gray3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+.form-field input, .form-field select {
+  width: 100%; padding: .75rem 1rem; border: 1.5px solid var(--gray2);
+  border-radius: var(--r); font-size: .9rem; font-family: 'Noto Sans', sans-serif;
+  color: var(--gray4); background: var(--gray1); outline: none;
+  transition: all .2s;
+}
+.form-field input:focus, .form-field select:focus {
+  border-color: var(--leaf); background: white; box-shadow: 0 0 0 3px rgba(30,107,18,.1);
+}
+
+.flash-msg {
+  padding: .6rem 1rem; border-radius: var(--r); font-size: .82rem; font-weight: 600;
+  margin-bottom: 1rem;
+}
+.flash-error   { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+.flash-success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+.flash-warning { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+
+.divider { text-align: center; margin: 1.25rem 0; color: var(--gray3); font-size: .78rem; position: relative; }
+.divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--gray2); }
+.divider span { background: white; padding: 0 .75rem; position: relative; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card fade-in">
+    <div class="auth-header">
+      <span class="logo">🌿</span>
+      <h2>Welcome Back</h2>
+      <p>Login to KisaanSeva — your complete farming platform</p>
+    </div>
+
+    <div class="auth-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="flash-msg flash-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <p style="font-size:.8rem;color:var(--gray3);margin-bottom:1rem;text-align:center;">Logging in as:</p>
+      <div class="role-toggle" id="roleToggle">
+        <div class="role-btn active" onclick="setRole('producer')" id="btn-producer">
+          <span class="role-icon">🧑‍🌾</span>
+          <strong>Producer</strong>
+          <span class="role-sub">I sell crops</span>
+        </div>
+        <div class="role-btn" onclick="setRole('consumer')" id="btn-consumer">
+          <span class="role-icon">🛒</span>
+          <strong>Consumer</strong>
+          <span class="role-sub">I buy crops</span>
+        </div>
+      </div>
+
+      <form method="POST" action="/login?lang={{ lang }}">
+        <input type="hidden" name="lang" value="{{ lang }}"/>
+        <input type="hidden" name="role" id="roleInput" value="producer"/>
+
+        <div class="form-field">
+          <label>📱 Mobile Number</label>
+          <input type="tel" name="phone" placeholder="10-digit mobile number" required maxlength="10"/>
+        </div>
+
+        <div class="form-field">
+          <label>🔒 Password</label>
+          <input type="password" name="password" placeholder="Your password" required/>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.85rem;font-size:.95rem;border-radius:var(--r);">
+          Login →
+        </button>
+      </form>
+
+      <div class="divider"><span>Don't have an account?</span></div>
+
+      <a href="/register?lang={{ lang }}" class="btn btn-secondary" style="width:100%;justify-content:center;padding:.75rem;font-size:.88rem;border-radius:var(--r);">
+        Register as Farmer / Buyer
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+function setRole(role) {
+  document.getElementById('roleInput').value = role;
+  document.getElementById('btn-producer').classList.toggle('active', role === 'producer');
+  document.getElementById('btn-consumer').classList.toggle('active', role === 'consumer');
+}
+</script>
+{% endblock %}

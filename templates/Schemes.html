@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Schemes & Weather{% endblock %}
+
+{% block extra_head %}
+<style>
+.schemes-hero { background:linear-gradient(135deg,#042c53,#185fa5,#378add); border-radius:var(--r-lg); padding:1.75rem 2rem; color:white; margin-bottom:1.5rem; position:relative; overflow:hidden; }
+.schemes-hero::before { content:'📋'; position:absolute; right:-10px; top:-10px; font-size:6rem; opacity:.08; }
+.schemes-hero h2 { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; margin-bottom:.3rem; }
+
+.forecast-row { display:flex; gap:.75rem; overflow-x:auto; padding-bottom:.5rem; margin-bottom:2rem; scrollbar-width:thin; }
+.forecast-card {
+  background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r);
+  padding:1rem .9rem; text-align:center; min-width:110px; flex-shrink:0; transition:all .2s;
+}
+.forecast-card:hover { border-color:var(--leaf); transform:translateY(-2px); box-shadow:var(--sh); }
+.fc-day  { font-size:.68rem; font-weight:700; color:var(--gray3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.4rem; }
+.fc-icon { font-size:2rem; display:block; margin-bottom:.3rem; }
+.fc-temp { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; color:var(--gray4); }
+.fc-desc { font-size:.68rem; color:var(--gray3); margin-top:3px; }
+.fc-hum  { font-size:.7rem; color:#2563eb; margin-top:2px; }
+.fc-rain { font-size:.7rem; color:#0891b2; }
+
+.scheme-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1rem; }
+.scheme-card {
+  background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r-lg);
+  padding:1.25rem; transition:all .2s;
+}
+.scheme-card:hover { box-shadow:var(--sh-lg); border-color:var(--leaf); transform:translateY(-2px); }
+.sc-top { display:flex; align-items:flex-start; gap:.75rem; margin-bottom:.75rem; }
+.sc-icon { font-size:1.8rem; flex-shrink:0; }
+.sc-name { font-family:'Syne',sans-serif; font-size:.95rem; font-weight:800; color:var(--gray4); line-height:1.3; }
+.sc-cat  { font-size:.65rem; color:var(--leaf); font-weight:700; text-transform:uppercase; letter-spacing:.07em; margin-top:3px; }
+.sc-row  { display:flex; gap:.5rem; margin-bottom:.4rem; }
+.sc-row-label { font-size:.68rem; font-weight:700; color:var(--gray3); text-transform:uppercase; width:80px; flex-shrink:0; }
+.sc-row-val   { font-size:.8rem; color:var(--gray4); line-height:1.45; flex:1; }
+.sc-actions { display:flex; gap:.6rem; margin-top:.85rem; flex-wrap:wrap; }
+
+.cat-pills { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
+.cat-pill { padding:.35rem .85rem; border-radius:100px; font-size:.75rem; font-weight:700; border:1.5px solid var(--leaf-pale); background:white; color:var(--gray3); text-decoration:none; transition:all .15s; }
+.cat-pill:hover { border-color:#185fa5; color:#185fa5; }
+.cat-pill.active { background:#185fa5; color:white; border-color:#185fa5; }
+
+.helpline-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:.75rem; margin-top:2rem; }
+.helpline-card { background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r); padding:.9rem 1rem; display:flex; align-items:center; gap:.75rem; }
+.hl-icon { font-size:1.4rem; flex-shrink:0; }
+.hl-name { font-size:.75rem; font-weight:700; color:var(--gray4); }
+.hl-num  { font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:var(--success); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="schemes-hero fade-in">
+    <h2>📋 Government Schemes & Weather</h2>
+    <p>All farmer welfare schemes at one place · 5-day weather forecast · {{ today }}</p>
+    <div style="margin-top:.75rem;display:flex;gap:.75rem;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:100px;padding:5px 14px;font-size:.72rem;font-weight:600;">🌡️ {{ temp }}°C</span>
+      <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:100px;padding:5px 14px;font-size:.72px;font-weight:600;">💧 {{ humidity }}% RH</span>
+      <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:100px;padding:5px 14px;font-size:.72rem;font-weight:600;">🌤️ {{ weather }}</span>
+      <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:100px;padding:5px 14px;font-size:.72rem;font-weight:600;">🌾 {{ season }} Season</span>
+    </div>
+  </div>
+
+  <!-- 5-DAY FORECAST -->
+  <div class="sec-head fade-in-1">
+    <div class="sec-head-icon">🌤️</div>
+    5-Day Weather Forecast — {{ city if city else "Hyderabad" }}
+  </div>
+  <div class="forecast-row fade-in-1">
+    {% set icons = {'Clear':'☀️','Clouds':'⛅','Rain':'🌧️','Drizzle':'🌦️','Thunderstorm':'⛈️','Snow':'❄️','Mist':'🌫️','Haze':'🌫️'} %}
+    {% for day in forecast %}
+    <div class="forecast-card">
+      <div class="fc-day">{{ day.date[5:] }}</div>
+      <span class="fc-icon">{{ icons.get(day.icon, '🌤️') }}</span>
+      <div class="fc-temp">{{ day.temp_max|int }}° / {{ day.temp_min|int }}°</div>
+      <div class="fc-desc">{{ day.desc[:12] }}</div>
+      <div class="fc-hum">💧 {{ day.humidity }}%</div>
+      {% if day.rain > 0 %}<div class="fc-rain">🌧️ {{ '%.1f'|format(day.rain) }}mm</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- SCHEME CATEGORIES -->
+  <div class="sec-head fade-in-2">
+    <div class="sec-head-icon">📋</div>
+    Government Welfare Schemes ({{ schemes|length }})
+  </div>
+  <div class="cat-pills fade-in-2">
+    <a class="cat-pill {% if category=='all' %}active{% endif %}" href="/schemes?lang={{ lang }}">All Schemes</a>
+    {% for cat in scheme_categories %}
+    <a class="cat-pill {% if category==cat %}active{% endif %}" href="/schemes?lang={{ lang }}&category={{ cat }}">
+      {{ cat.replace('_',' ').title() }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="scheme-grid fade-in-3">
+    {% for s in schemes %}
+    <div class="scheme-card">
+      <div class="sc-top">
+        <span class="sc-icon">{{ s.icon }}</span>
+        <div>
+          <div class="sc-name">{{ s.name }}</div>
+          <div class="sc-cat">{{ s.category.replace('_',' ').title() }}</div>
+        </div>
+      </div>
+      <div class="sc-row">
+        <span class="sc-row-label">Benefit</span>
+        <span class="sc-row-val" style="color:var(--success);font-weight:600;">{{ s.benefit }}</span>
+      </div>
+      <div class="sc-row">
+        <span class="sc-row-label">Who</span>
+        <span class="sc-row-val">{{ s.eligibility }}</span>
+      </div>
+      <div class="sc-row">
+        <span class="sc-row-label">Documents</span>
+        <span class="sc-row-val">{{ s.documents }}</span>
+      </div>
+      <div class="sc-row">
+        <span class="sc-row-label">Helpline</span>
+        <span class="sc-row-val"><a href="tel:{{ s.helpline }}" style="color:var(--leaf);font-weight:700;">📞 {{ s.helpline }}</a></span>
+      </div>
+      <div class="sc-actions">
+        <a class="btn btn-primary btn-sm" href="{{ s.apply_url }}" target="_blank">🌐 Apply Online</a>
+        <a class="btn btn-secondary btn-sm" href="https://wa.me/?text=Scheme:+{{ s.name|urlencode }}%0AApply:+{{ s.apply_url|urlencode }}%0AHelpline:+{{ s.helpline }}%0A_KisaanSeva_" target="_blank">📲 Share</a>
+        <a class="btn btn-secondary btn-sm" href="tel:{{ s.helpline }}">📞 Call</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- IMPORTANT HELPLINES -->
+  <div class="sec-head" style="margin-top:2rem;">
+    <div class="sec-head-icon">📞</div>
+    Important Helplines
+  </div>
+  <div class="helpline-grid">
+    <div class="helpline-card"><span class="hl-icon">🌾</span><div><div class="hl-name">Kisan Call Center</div><div class="hl-num">1551</div></div></div>
+    <div class="helpline-card"><span class="hl-icon">🛡️</span><div><div class="hl-name">Crop Insurance</div><div class="hl-num">14447</div></div></div>
+    <div class="helpline-card"><span class="hl-icon">💰</span><div><div class="hl-name">PM-Kisan</div><div class="hl-num">155261</div></div></div>
+    <div class="helpline-card"><span class="hl-icon">🌱</span><div><div class="hl-name">Soil Health</div><div class="hl-num">1800-180-1551</div></div></div>
+    <div class="helpline-card"><span class="hl-icon">💧</span><div><div class="hl-name">PM-KSY Irrigation</div><div class="hl-num">1800-180-1551</div></div></div>
+    <div class="helpline-card"><span class="hl-icon">⚠️</span><div><div class="hl-name">Cyber Crime</div><div class="hl-num">1930</div></div></div>
+  </div>
+
+  <footer>KisaanSeva · Government Schemes · Data: Government of India portals</footer>
+</div>
+{% endblock %}

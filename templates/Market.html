@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}{{ ui.market_title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.market-hero { background:linear-gradient(135deg,#4a1b0c,#993c1d,#d85a30); border-radius:var(--r-lg); padding:1.75rem 2rem; color:white; margin-bottom:1.5rem; position:relative; overflow:hidden; }
+.market-hero::before { content:'🛒'; position:absolute; right:-10px; top:-10px; font-size:6rem; opacity:.08; }
+.market-hero h2 { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; margin-bottom:.3rem; }
+.market-hero p  { opacity:.8; font-size:.85rem; margin-bottom:1rem; }
+
+.role-info { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); border-radius:var(--r); padding:.75rem 1rem; font-size:.82rem; margin-bottom:1rem; }
+
+.filter-row { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
+.filter-chip { padding:.4rem .9rem; border-radius:100px; font-size:.78rem; font-weight:700; border:1.5px solid var(--leaf-pale); background:white; color:var(--gray3); cursor:pointer; text-decoration:none; transition:all .15s; }
+.filter-chip:hover { border-color:var(--leaf); color:var(--leaf); }
+.filter-chip.active { background:var(--leaf); color:white; border-color:var(--leaf); }
+.filter-chip.sell-chip.active { background:#993c1d; border-color:#993c1d; }
+.filter-chip.buy-chip.active  { background:#1d4ed8; border-color:#1d4ed8; }
+
+.listings-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.1rem; margin-bottom:2rem; }
+.listing-card { background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r); overflow:hidden; transition:all .2s; }
+.listing-card:hover { box-shadow:var(--sh-lg); transform:translateY(-2px); border-color:var(--leaf); }
+.listing-card.own-card { border-color:var(--sun); }
+.lc-img { width:100%; height:140px; object-fit:cover; background:var(--leaf-mist); display:flex; align-items:center; justify-content:center; font-size:3rem; }
+.lc-img img { width:100%; height:100%; object-fit:cover; }
+.lc-body { padding:1rem; }
+.lc-type-row { display:flex; align-items:center; gap:6px; margin-bottom:.5rem; }
+.lc-crop { font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:800; color:var(--gray4); }
+.lc-qty  { font-size:.78rem; color:var(--gray3); margin:.2rem 0; }
+.lc-price { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; color:var(--success); margin:.4rem 0; }
+.lc-price span { font-size:.75rem; color:var(--gray3); font-family:'Noto Sans',sans-serif; font-weight:400; }
+.lc-loc  { font-size:.75rem; color:var(--gray3); margin-bottom:.75rem; }
+.lc-desc { font-size:.78rem; color:var(--gray4); line-height:1.55; margin-bottom:.75rem; }
+.lc-actions { display:flex; gap:6px; flex-wrap:wrap; }
+.lc-date { font-size:.65rem; color:var(--gray3); margin-top:.5rem; }
+.lc-seller { font-size:.7rem; color:var(--gray3); margin-top:3px; display:flex; align-items:center; gap:4px; }
+
+.own-badge { font-size:.65rem; background:var(--sun); color:#5c3310; padding:2px 8px; border-radius:100px; font-weight:700; }
+
+.no-results { text-align:center; padding:3rem; color:var(--gray3); background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r-lg); }
+.no-results-icon { font-size:3rem; display:block; margin-bottom:.75rem; }
+
+.login-cta { background:linear-gradient(135deg,var(--leaf-mist),white); border:1.5px solid var(--leaf-pale); border-radius:var(--r-lg); padding:1.25rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.login-cta p { flex:1; font-size:.85rem; color:var(--gray4); margin:0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="market-hero fade-in">
+    <h2>{{ ui.market_title }}</h2>
+    <p>{{ ui.market_sub }}</p>
+    {% if user %}
+    <div class="role-info">
+      {% if user.role == 'producer' %}
+        🧑‍🌾 <strong>Producer view</strong> — Post your crops for sale, or find inputs you need.
+      {% else %}
+        🛒 <strong>Consumer/Buyer view</strong> — Browse available crops from local farmers.
+      {% endif %}
+    </div>
+    {% endif %}
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+      {% if user %}
+      <a class="btn btn-warning" href="/market/post?lang={{ lang }}">{{ ui.market_post_btn }}</a>
+      {% endif %}
+      <a class="btn" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);" href="/market?lang={{ lang }}&type=sell">{{ ui.market_sell_btn }}</a>
+      <a class="btn" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);" href="/market?lang={{ lang }}&type=buy">{{ ui.market_buy_btn }}</a>
+    </div>
+  </div>
+
+  {% if not user %}
+  <div class="login-cta fade-in-1">
+    <span style="font-size:2rem;">🌾</span>
+    <p>Login as a <strong>Producer</strong> to post your crop listings, or as a <strong>Consumer</strong> to contact farmers directly.</p>
+    <a href="/login?lang={{ lang }}" class="btn btn-primary btn-sm">Login / Register</a>
+  </div>
+  {% endif %}
+
+  <!-- FILTERS -->
+  <div class="filter-row fade-in-1">
+    <span style="font-size:.78rem;color:var(--gray3);font-weight:700;">{{ ui.market_filter_label }}</span>
+    <a class="filter-chip {% if listing_type=='all' %}active{% endif %}" href="/market?lang={{ lang }}">{{ ui.market_filter_all }}</a>
+    <a class="filter-chip sell-chip {% if listing_type=='sell' %}active{% endif %}" href="/market?lang={{ lang }}&type=sell">{{ ui.market_filter_selling }}</a>
+    <a class="filter-chip buy-chip {% if listing_type=='buy' %}active{% endif %}" href="/market?lang={{ lang }}&type=buy">{{ ui.market_filter_buying }}</a>
+    <a class="filter-chip {% if category=='produce' %}active{% endif %}" href="/market?lang={{ lang }}&category=produce">{{ ui.market_filter_produce }}</a>
+    <a class="filter-chip {% if category=='input' %}active{% endif %}" href="/market?lang={{ lang }}&category=input">{{ ui.market_filter_input }}</a>
+    <form style="flex:1;display:flex;gap:.5rem;min-width:180px;" method="get" action="/market">
+      <input type="hidden" name="lang" value="{{ lang }}"/>
+      <input class="field-input" style="border-radius:100px;padding:.45rem .9rem;font-size:.82rem;" name="q" value="{{ search }}" placeholder="{{ ui.market_search_ph }}"/>
+    </form>
+  </div>
+
+  <!-- LISTINGS -->
+  {% if listings %}
+  <div class="listings-grid fade-in-2">
+    {% for l in listings %}
+    {% set is_own = user and l.user_id == user.id %}
+    <div class="listing-card {% if is_own %}own-card{% endif %}">
+      <div class="lc-img">
+        {% if l.image_path and l.image_path != '' %}
+        <img src="/{{ l.image_path }}" alt="{{ l.crop }}"/>
+        {% else %}
+        {% set icons = {'tomato':'🍅','rice':'🌾','cotton':'🌿','onion':'🧅','chili':'🌶️','wheat':'🌾','maize':'🌽','soybean':'🟡','banana':'🍌','potato':'🥔','fertilizer':'🧪','pesticide':'💊','seed':'🌱','groundnut':'🥜','turmeric':'🟡'} %}
+        {% set icon = icons.get(l.crop.lower().split()[0], '🌾') %}
+        <span style="font-size:3.5rem">{{ icon }}</span>
+        {% endif %}
+      </div>
+
+      <div class="lc-body">
+        <div class="lc-type-row">
+          {% if l.type == 'sell' %}
+          <span class="badge badge-green">{{ ui.market_badge_selling }}</span>
+          {% else %}
+          <span class="badge badge-blue">{{ ui.market_badge_buying }}</span>
+          {% endif %}
+          {% if l.category == 'input' %}
+          <span class="badge badge-orange">{{ ui.market_badge_input }}</span>
+          {% endif %}
+          {% if is_own %}<span class="own-badge">Your Listing</span>{% endif %}
+        </div>
+
+        <div class="lc-crop">{{ l.crop }}</div>
+        {% if l.quantity and l.quantity > 0 %}
+        <div class="lc-qty">{{ l.quantity|int }} {{ l.unit }} {{ ui.market_available }}</div>
+        {% endif %}
+
+        {% if l.price and l.price > 0 %}
+        <div class="lc-price">₹{{ l.price|int }}<span>/{{ l.unit }}</span></div>
+        {% else %}
+        <div class="lc-price" style="color:var(--warning);">{{ ui.market_negotiable }}</div>
+        {% endif %}
+
+        <div class="lc-loc">📍 {{ l.location }}{% if l.district %}, {{ l.district }}{% endif %}</div>
+
+        {% if l.description %}
+        <div class="lc-desc">{{ l.description[:80] }}{% if l.description|length > 80 %}...{% endif %}</div>
+        {% endif %}
+
+        <div class="lc-actions">
+          {% if not is_own %}
+          <a class="btn btn-primary btn-sm" href="https://wa.me/91{{ l.contact }}?text=Hi!+I+saw+your+listing+for+{{ l.crop|urlencode }}+on+KisaanSeva.+Is+it+still+available?" target="_blank">{{ ui.market_contact }}</a>
+          <a class="btn btn-secondary btn-sm" href="tel:{{ l.contact }}">{{ ui.market_call }}</a>
+          {% else %}
+          <form method="POST" action="/market/delete/{{ l.id }}?lang={{ lang }}" style="display:inline;">
+            <input type="hidden" name="lang" value="{{ lang }}"/>
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove this listing?')">🗑 Remove</button>
+          </form>
+          {% endif %}
+        </div>
+
+        {% if l.seller_name %}
+        <div class="lc-seller">
+          {% if l.seller_role == 'producer' %}🧑‍🌾{% else %}🛒{% endif %}
+          {{ l.seller_name }}
+        </div>
+        {% endif %}
+        <div class="lc-date">{{ ui.market_posted }} {{ l.created_at.strftime('%d %b %Y') if l.created_at else '' }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="no-results">
+    <span class="no-results-icon">🔍</span>
+    <strong>{{ ui.market_no_results }}</strong>
+    {% if user %}
+    <br/><br/>
+    <a href="/market/post?lang={{ lang }}" class="btn btn-primary btn-sm">{{ ui.market_be_first }}</a>
+    {% else %}
+    <br/><a href="/login?lang={{ lang }}" style="color:var(--leaf);font-weight:700;">Login to post a listing</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:var(--r);padding:1rem 1.2rem;font-size:.8rem;color:#15803d;margin-top:1rem;">
+    {{ ui.market_safety }}
+  </div>
+
+  <footer>{{ ui.market_footer }}</footer>
+</div>
+{% endblock %}

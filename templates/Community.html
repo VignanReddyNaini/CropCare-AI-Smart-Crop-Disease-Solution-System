@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Community{% endblock %}
+
+{% block extra_head %}
+<style>
+.community-hero { background:linear-gradient(135deg,#26215c,#534ab7,#7f77dd); border-radius:var(--r-lg); padding:1.75rem 2rem; color:white; margin-bottom:1.5rem; position:relative; overflow:hidden; }
+.community-hero::before { content:'👥'; position:absolute; right:-10px; top:-10px; font-size:6rem; opacity:.08; }
+.community-hero h2 { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; margin-bottom:.3rem; }
+.community-hero p  { opacity:.8; font-size:.85rem; }
+
+.cat-pills { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
+.cat-pill { padding:.35rem .85rem; border-radius:100px; font-size:.75rem; font-weight:700; border:1.5px solid var(--leaf-pale); background:white; color:var(--gray3); text-decoration:none; transition:all .15s; }
+.cat-pill:hover { border-color:var(--leaf); color:var(--leaf); }
+.cat-pill.active { background:var(--leaf); color:white; border-color:var(--leaf); }
+
+.posts-list { display:flex; flex-direction:column; gap:.8rem; }
+.post-card { background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r); padding:1.1rem 1.2rem; transition:all .2s; cursor:pointer; text-decoration:none; display:block; color:inherit; }
+.post-card:hover { border-color:var(--leaf); box-shadow:var(--sh); transform:translateX(3px); }
+.pc-title { font-family:'Syne',sans-serif; font-size:.98rem; font-weight:700; color:var(--gray4); margin-bottom:.4rem; line-height:1.35; }
+.pc-body  { font-size:.8rem; color:var(--gray3); line-height:1.55; margin-bottom:.6rem; }
+.pc-meta  { display:flex; align-items:center; gap:.75rem; font-size:.7rem; color:var(--gray3); flex-wrap:wrap; }
+.pc-author { font-weight:700; color:var(--gray4); }
+.pc-replies { display:flex; align-items:center; gap:3px; }
+
+.ai-ask-box { background:linear-gradient(135deg,#edf7ea,#c8e8c0); border:1px solid var(--leaf-pale); border-radius:var(--r-lg); padding:1.25rem 1.5rem; margin-bottom:1.5rem; }
+.ai-ask-box h3 { font-family:'Syne',sans-serif; font-weight:800; color:var(--leaf); margin-bottom:.6rem; }
+.ai-ask-row { display:flex; gap:.6rem; }
+.ai-answer { background:white; border:1px solid var(--leaf-pale); border-radius:var(--r); padding:1rem; margin-top:.8rem; font-size:.85rem; line-height:1.65; display:none; }
+
+.login-cta-strip { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); border-radius:var(--r); padding:.75rem 1rem; font-size:.82rem; margin-top:.75rem; display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+
+.empty-community { text-align:center; padding:3rem; color:var(--gray3); background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r-lg); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="community-hero fade-in">
+    <h2>👥 Farmer Community</h2>
+    <p>Ask questions, share knowledge, get expert answers — in your language</p>
+    <div style="margin-top:1rem;display:flex;gap:.75rem;flex-wrap:wrap;">
+      {% if user %}
+      <a class="btn btn-warning" href="/community/new?lang={{ lang }}">+ Ask a Question</a>
+      {% else %}
+      <a class="btn btn-warning" href="/login?lang={{ lang }}&next=/community/new?lang={{ lang }}">+ Ask a Question</a>
+      {% endif %}
+      <a class="btn" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);" href="/community?lang={{ lang }}">All Posts</a>
+    </div>
+    {% if not user %}
+    <div class="login-cta-strip">
+      ℹ️ <a href="/login?lang={{ lang }}" style="color:white;font-weight:700;">Login</a> to ask questions and participate in discussions.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- AI QUICK ANSWER -->
+  <div class="ai-ask-box fade-in-1">
+    <h3>🤖 Ask AI Expert Instantly</h3>
+    <div class="ai-ask-row">
+      <input class="field-input" id="aiQuestion" style="border-radius:100px;" placeholder="Type your farm question... e.g. Why are my tomato leaves curling?"/>
+      <button class="btn btn-primary" onclick="askAI()">Ask</button>
+    </div>
+    <div class="ai-answer" id="aiAnswer"></div>
+  </div>
+
+  <!-- CATEGORY FILTER -->
+  <div class="cat-pills fade-in-1">
+    <a class="cat-pill {% if category=='all' %}active{% endif %}" href="/community?lang={{ lang }}">All</a>
+    {% for cat in categories %}
+    <a class="cat-pill {% if category==cat %}active{% endif %}" href="/community?lang={{ lang }}&category={{ cat }}">
+      {{ {'general':'💬 General','disease':'🔴 Disease','variety':'🌾 Variety','scheme':'📋 Scheme','market':'💰 Market','water':'💧 Water','soil':'🪱 Soil','equipment':'⚙️ Equipment'}.get(cat, cat) }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- SEARCH -->
+  <form style="display:flex;gap:.6rem;margin-bottom:1.25rem;" method="get" action="/community">
+    <input type="hidden" name="lang" value="{{ lang }}"/>
+    <input class="field-input" style="border-radius:100px;flex:1;" name="q" value="{{ search }}" placeholder="🔍 Search posts..."/>
+    <button type="submit" class="btn btn-secondary">Search</button>
+  </form>
+
+  <!-- POSTS -->
+  <div class="posts-list fade-in-2">
+    {% if posts %}
+    {% for item in posts %}
+    {% set p = item.post %}
+    <a class="post-card" href="/community/post/{{ p.id }}?lang={{ lang }}">
+      <div style="display:flex;gap:6px;margin-bottom:.4rem;">
+        <span class="badge badge-{{ {'disease':'red','scheme':'blue','market':'yellow','general':'green','variety':'green','water':'blue','soil':'orange','equipment':'gray'}.get(p.category,'gray') }}">
+          {{ {'general':'💬 General','disease':'🔴 Disease','variety':'🌾 Variety','scheme':'📋 Scheme','market':'💰 Market','water':'💧 Water','soil':'🪱 Soil','equipment':'⚙️ Equipment'}.get(p.category, p.category) }}
+        </span>
+        {% if p.upvotes > 0 %}
+        <span class="badge badge-green">👍 {{ p.upvotes }}</span>
+        {% endif %}
+      </div>
+      <div class="pc-title">{{ p.title }}</div>
+      <div class="pc-body">{{ p.body[:120] }}{% if p.body|length > 120 %}...{% endif %}</div>
+      <div class="pc-meta">
+        <span class="pc-author">👤 {{ p.author_name }}</span>
+        {% if p.location %}<span>📍 {{ p.location }}</span>{% endif %}
+        <span class="pc-replies">💬 {{ item.reply_count }} replies</span>
+        <span>🕐 {{ p.created_at.strftime('%d %b %Y') }}</span>
+      </div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div class="empty-community">
+      <span style="font-size:2.5rem;display:block;margin-bottom:.75rem;">📭</span>
+      <strong>No posts yet.</strong>
+      {% if user %}
+      <a href="/community/new?lang={{ lang }}" style="color:var(--leaf);font-weight:700;">Ask the first question!</a>
+      {% else %}
+      <a href="/login?lang={{ lang }}" style="color:var(--leaf);font-weight:700;">Login to ask the first question!</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <footer>KisaanSeva · Farmer Community · Knowledge is shared wealth</footer>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const LANG_CODE = "{{ lang }}";
+function askAI() {
+  const q = document.getElementById('aiQuestion').value.trim();
+  if (!q) return;
+  const ansEl = document.getElementById('aiAnswer');
+  ansEl.style.display = 'block';
+  ansEl.innerHTML = '🤖 <em>AI expert is thinking...</em>';
+  fetch('/community/ask-ai', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({question:q, lang:LANG_CODE})
+  })
+  .then(r => r.json())
+  .then(d => { ansEl.innerHTML = '🤖 <strong>AI Expert:</strong><br/>' + d.answer.replace(/\n/g,'<br/>'); })
+  .catch(() => { ansEl.innerHTML = '⚠️ AI unavailable.'; });
+}
+document.getElementById('aiQuestion').addEventListener('keydown', e => { if (e.key === 'Enter') askAI(); });
+</script>
+{% endblock %}

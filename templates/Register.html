@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Register — KisaanSeva{% endblock %}
+
+{% block extra_head %}
+<style>
+.auth-wrap {
+  min-height: calc(100vh - 60px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(160deg, var(--leaf-mist) 0%, var(--cream) 60%);
+}
+.auth-card {
+  background: white; border: 1px solid var(--leaf-pale);
+  border-radius: var(--r-lg); box-shadow: var(--sh-lg);
+  width: 100%; max-width: 480px; overflow: hidden;
+}
+.auth-header {
+  background: linear-gradient(135deg, #0d4a07, var(--leaf), var(--leaf-lt));
+  padding: 1.75rem 2rem 1.25rem; text-align: center; color: white;
+}
+.auth-header .logo { font-size: 2.2rem; margin-bottom: .4rem; display: block; }
+.auth-header h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; margin-bottom: .2rem; }
+.auth-header p  { opacity: .8; font-size: .8rem; }
+.auth-body { padding: 1.5rem 2rem 2rem; }
+
+.role-toggle {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: .5rem; margin-bottom: 1.5rem;
+}
+.role-btn {
+  padding: .8rem; border-radius: var(--r); border: 2px solid var(--leaf-pale);
+  background: var(--gray1); font-size: .85rem; font-weight: 700; cursor: pointer;
+  text-align: center; transition: all .2s; color: var(--gray3);
+}
+.role-btn:hover { border-color: var(--leaf); color: var(--leaf); background: var(--leaf-mist); }
+.role-btn.active { border-color: var(--leaf); background: var(--leaf); color: white; }
+.role-btn .role-icon { display: block; font-size: 1.5rem; margin-bottom: .3rem; }
+.role-btn .role-name { font-weight: 800; font-size: .9rem; }
+.role-btn .role-desc { font-size: .65rem; opacity: .8; margin-top: 2px; }
+
+.form-field { margin-bottom: .9rem; }
+.form-field label { display: block; font-size: .68rem; font-weight: 700; color: var(--gray3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+.form-field input, .form-field select {
+  width: 100%; padding: .7rem 1rem; border: 1.5px solid var(--gray2);
+  border-radius: var(--r); font-size: .88rem; font-family: 'Noto Sans', sans-serif;
+  color: var(--gray4); background: var(--gray1); outline: none; transition: all .2s;
+}
+.form-field input:focus, .form-field select:focus {
+  border-color: var(--leaf); background: white; box-shadow: 0 0 0 3px rgba(30,107,18,.1);
+}
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+@media(max-width:480px) { .two-col { grid-template-columns: 1fr; } }
+
+.loc-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: .6rem 1rem; border-radius: var(--r); border: 1.5px solid var(--leaf-pale);
+  background: var(--leaf-mist); color: var(--leaf); font-weight: 700; font-size: .8rem;
+  cursor: pointer; transition: all .2s; width: 100%; justify-content: center; margin-top: .3rem;
+}
+.loc-btn:hover { border-color: var(--leaf); background: var(--leaf); color: white; }
+.loc-status { font-size: .72rem; color: var(--gray3); margin-top: .3rem; text-align: center; }
+.loc-status.ok { color: var(--success); }
+
+.flash-msg { padding: .6rem 1rem; border-radius: var(--r); font-size: .82rem; font-weight: 600; margin-bottom: 1rem; }
+.flash-error { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+.flash-success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+.flash-warning { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+
+.sec-label {
+  font-size: .7rem; font-weight: 700; color: var(--leaf); text-transform: uppercase;
+  letter-spacing: .1em; margin: 1.1rem 0 .75rem;
+  padding-bottom: .3rem; border-bottom: 1px solid var(--leaf-pale);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card fade-in">
+    <div class="auth-header">
+      <span class="logo">🌿</span>
+      <h2>Join KisaanSeva</h2>
+      <p>Register as a farmer, producer, or crop buyer</p>
+    </div>
+
+    <div class="auth-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="flash-msg flash-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <!-- ROLE SELECTION -->
+      <div class="sec-label">I am a…</div>
+      <div class="role-toggle" id="roleToggle">
+        <div class="role-btn active" onclick="setRole('producer')" id="btn-producer">
+          <span class="role-icon">🧑‍🌾</span>
+          <span class="role-name">Producer</span>
+          <span class="role-desc">I grow & sell crops</span>
+        </div>
+        <div class="role-btn" onclick="setRole('consumer')" id="btn-consumer">
+          <span class="role-icon">🛒</span>
+          <span class="role-name">Consumer / Buyer</span>
+          <span class="role-desc">I buy agri produce</span>
+        </div>
+      </div>
+
+      <form method="POST" action="/register?lang={{ lang }}" id="regForm">
+        <input type="hidden" name="lang" value="{{ lang }}"/>
+        <input type="hidden" name="role" id="roleInput" value="producer"/>
+        <input type="hidden" name="lat" id="latInput"/>
+        <input type="hidden" name="lng" id="lngInput"/>
+
+        <!-- PERSONAL INFO -->
+        <div class="sec-label">Personal Information</div>
+        <div class="form-field">
+          <label>Full Name *</label>
+          <input type="text" name="name" placeholder="e.g. Raju Kumar" required/>
+        </div>
+        <div class="two-col">
+          <div class="form-field">
+            <label>📱 Mobile Number *</label>
+            <input type="tel" name="phone" placeholder="10-digit number" maxlength="10" required/>
+          </div>
+          <div class="form-field">
+            <label>🔒 Password *</label>
+            <input type="password" name="password" placeholder="Min 6 characters" minlength="6" required/>
+          </div>
+        </div>
+
+        <!-- LOCATION INFO -->
+        <div class="sec-label">📍 Your Location</div>
+        <button type="button" class="loc-btn" onclick="detectLocation()">
+          📍 Detect My Location (GPS)
+        </button>
+        <div class="loc-status" id="locStatus">Location helps show nearby mandis & relevant prices</div>
+
+        <div class="two-col" style="margin-top:.75rem;">
+          <div class="form-field">
+            <label>Village / Town</label>
+            <input type="text" name="village" id="villageInput" placeholder="e.g. Warangal"/>
+          </div>
+          <div class="form-field">
+            <label>District *</label>
+            <input type="text" name="district" id="districtInput" placeholder="e.g. Rangareddy" required/>
+          </div>
+        </div>
+        <div class="form-field">
+          <label>State *</label>
+          <select name="state" id="stateInput" required>
+            <option value="">Select State</option>
+            <option value="Telangana" selected>Telangana</option>
+            <option value="Andhra Pradesh">Andhra Pradesh</option>
+            <option value="Maharashtra">Maharashtra</option>
+            <option value="Karnataka">Karnataka</option>
+            <option value="Tamil Nadu">Tamil Nadu</option>
+            <option value="Gujarat">Gujarat</option>
+            <option value="Punjab">Punjab</option>
+            <option value="Haryana">Haryana</option>
+            <option value="Uttar Pradesh">Uttar Pradesh</option>
+            <option value="Madhya Pradesh">Madhya Pradesh</option>
+            <option value="Rajasthan">Rajasthan</option>
+            <option value="Bihar">Bihar</option>
+            <option value="West Bengal">West Bengal</option>
+            <option value="Odisha">Odisha</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.85rem;font-size:.95rem;border-radius:var(--r);margin-top:.5rem;">
+          🚀 Create Account
+        </button>
+      </form>
+
+      <div style="text-align:center;margin-top:1rem;font-size:.8rem;color:var(--gray3);">
+        Already registered? <a href="/login?lang={{ lang }}" style="color:var(--leaf);font-weight:700;">Login here →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function setRole(role) {
+  document.getElementById('roleInput').value = role;
+  document.getElementById('btn-producer').classList.toggle('active', role === 'producer');
+  document.getElementById('btn-consumer').classList.toggle('active', role === 'consumer');
+}
+
+function detectLocation() {
+  const status = document.getElementById('locStatus');
+  status.textContent = '🔍 Detecting your location...';
+  status.className = 'loc-status';
+
+  if (!navigator.geolocation) {
+    status.textContent = '⚠️ Geolocation not supported by your browser.';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      document.getElementById('latInput').value = lat;
+      document.getElementById('lngInput').value = lng;
+
+      // Reverse geocode using OpenStreetMap Nominatim
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+        const geo  = await resp.json();
+        const addr = geo.address || {};
+        const village = addr.village || addr.town || addr.city || addr.county || '';
+        const district= addr.county || addr.state_district || addr.city || '';
+        const state   = addr.state || '';
+
+        if (village) document.getElementById('villageInput').value = village;
+        if (district) document.getElementById('districtInput').value = district;
+        if (state)   {
+          const sel = document.getElementById('stateInput');
+          for (let opt of sel.options) {
+            if (state.includes(opt.value) || opt.value.includes(state)) {
+              sel.value = opt.value; break;
+            }
+          }
+        }
+        status.textContent = `✅ Location detected: ${village || district}`;
+        status.className = 'loc-status ok';
+      } catch(e) {
+        document.getElementById('latInput').value = lat;
+        document.getElementById('lngInput').value = lng;
+        status.textContent = `✅ GPS captured (${parseFloat(lat).toFixed(3)}, ${parseFloat(lng).toFixed(3)})`;
+        status.className = 'loc-status ok';
+      }
+    },
+    (err) => {
+      status.textContent = '⚠️ Could not detect location. Please fill in manually.';
+    },
+    { timeout: 8000 }
+  );
+}
+</script>
+{% endblock %}

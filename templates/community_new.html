@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Ask Question{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div style="max-width:600px;">
+
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem;">
+      <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#534ab7,#7f77dd);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">❓</div>
+      <div>
+        <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--gray4);">Ask a Question</h2>
+        <p style="font-size:.8rem;color:var(--gray3);">Your question will reach thousands of farmers & experts</p>
+      </div>
+    </div>
+
+    {% if user %}
+    <div style="background:var(--leaf-mist);border:1px solid var(--leaf-pale);border-radius:var(--r);padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.82rem;color:var(--leaf);">
+      🧑‍🌾 Posting as <strong>{{ user.name }}</strong>
+      {% if user.village %} · 📍 {{ user.village }}{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <form method="POST">
+        <input type="hidden" name="lang" value="{{ lang }}"/>
+
+        <div class="field">
+          <label class="field-label">Category *</label>
+          <select name="category" class="field-select" required>
+            <option value="general">💬 General</option>
+            <option value="disease">🔴 Disease / Pest</option>
+            <option value="variety">🌾 Variety / Seed</option>
+            <option value="scheme">📋 Government Scheme</option>
+            <option value="market">💰 Market / Price</option>
+            <option value="water">💧 Irrigation / Water</option>
+            <option value="soil">🪱 Soil / Fertilizer</option>
+            <option value="equipment">⚙️ Equipment / Machine</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Question Title *</label>
+          <input type="text" name="title" class="field-input" required placeholder="e.g. Why are my tomato leaves turning yellow?"/>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Question Details *</label>
+          <textarea name="body" class="field-textarea" required style="min-height:120px;"
+            placeholder="Describe your problem in detail: crop age, symptoms you see, weather conditions, what you already tried..."></textarea>
+        </div>
+
+        <div style="display:flex;gap:.75rem;">
+          <button type="submit" class="btn btn-primary">🚀 Post Question</button>
+          <a href="/community?lang={{ lang }}" class="btn btn-secondary">← Cancel</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}{{ ui.mandi_title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.mandi-hero { background:linear-gradient(135deg,#0d4a07,#1e6b12,#2d9620); border-radius:var(--r-lg); padding:1.75rem 2rem; color:white; margin-bottom:1.5rem; position:relative; overflow:hidden; }
+.mandi-hero::before { content:'💰'; position:absolute; right:-10px; top:-10px; font-size:6rem; opacity:.08; }
+.mandi-hero h2 { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; margin-bottom:.4rem; }
+.mandi-hero p  { opacity:.8; font-size:.85rem; }
+.mandi-hero-meta { display:flex; gap:.6rem; margin-top:1rem; flex-wrap:wrap; }
+.mhm { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); border-radius:100px; padding:5px 12px; font-size:.72rem; font-weight:600; }
+
+.search-row { display:flex; gap:.75rem; margin-bottom:1.5rem; }
+.search-input { flex:1; padding:.7rem 1rem; border:1.5px solid var(--leaf-pale); border-radius:100px; font-size:.9rem; font-family:'Noto Sans',sans-serif; outline:none; background:white; }
+.search-input:focus { border-color:var(--leaf); box-shadow:0 0 0 3px rgba(30,107,18,.1); }
+
+.prices-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; margin-bottom:2rem; }
+.price-card { background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r); padding:1.1rem; transition:all .2s; cursor:pointer; }
+.price-card:hover { border-color:var(--leaf); box-shadow:var(--sh); transform:translateY(-2px); }
+.pc-crop { font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:var(--gray4); margin-bottom:.5rem; text-transform:capitalize; }
+.pc-modal { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; color:var(--success); }
+.pc-unit  { font-size:.7rem; color:var(--gray3); }
+.pc-range { font-size:.75rem; color:var(--gray3); margin-top:4px; }
+.pc-market { font-size:.7rem; color:var(--leaf); margin-top:6px; font-weight:600; display:flex; align-items:center; gap:4px; }
+.pc-date  { font-size:.65rem; color:var(--gray3); margin-top:4px; }
+.pc-bar-bg { background:var(--gray2); border-radius:100px; height:4px; margin-top:8px; overflow:hidden; }
+.pc-bar-fill { height:100%; background:linear-gradient(90deg,var(--leaf),var(--leaf-lt)); border-radius:100px; }
+
+.empty-state { text-align:center; padding:3rem; color:var(--gray3); background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r-lg); }
+.empty-state-icon { font-size:3rem; display:block; margin-bottom:.75rem; }
+
+.price-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:300; align-items:center; justify-content:center; }
+.price-modal-bg.open { display:flex; }
+.price-modal { background:white; border-radius:var(--r-lg); padding:2rem; max-width:440px; width:90%; }
+.pm-title { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; color:var(--gray4); margin-bottom:1.25rem; text-transform:capitalize; }
+.pm-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.75rem; margin-bottom:1.25rem; }
+.pm-stat { background:var(--gray1); border-radius:10px; padding:.75rem; text-align:center; }
+.pm-stat-val { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; }
+.pm-stat-lbl { font-size:.62rem; text-transform:uppercase; letter-spacing:.07em; color:var(--gray3); margin-top:2px; }
+.pm-green { color:var(--success); }
+.pm-yellow { color:var(--warning); }
+.pm-blue  { color:#2563eb; }
+
+.source-note { background:#fffbeb; border:1px solid #fcd34d; border-radius:var(--r); padding:.8rem 1rem; font-size:.78rem; color:#a16207; margin-bottom:1.25rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="mandi-hero fade-in">
+    <h2>{{ ui.mandi_title }}</h2>
+    <p>{{ ui.mandi_sub }} — {{ state_name }}</p>
+    <div class="mandi-hero-meta">
+      <span class="mhm">📅 {{ today }}</span>
+      <span class="mhm">🌾 {{ season }} Season</span>
+      <span class="mhm">📍 {{ location_city }}</span>
+      <span class="mhm">🌡️ {{ temp }}°C · {{ humidity }}% RH</span>
+    </div>
+  </div>
+
+  {% if user %}
+  <div style="background:var(--leaf-mist);border:1px solid var(--leaf-pale);border-radius:var(--r);padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.82rem;color:var(--leaf);display:flex;align-items:center;gap:8px;">
+    📍 Showing prices for <strong>{{ user.state or state_name }}</strong>{% if user.district %} · {{ user.district }}{% endif %}
+    — <a href="/profile?lang={{ lang }}" style="color:var(--leaf);font-weight:700;">Update location</a>
+  </div>
+  {% endif %}
+
+  <div class="source-note">
+    📊 Prices sourced live from <strong>AGMARKNET / data.gov.in</strong> — updated daily from registered mandis.
+  </div>
+
+  <div class="search-row fade-in-1">
+    <form style="display:contents;" method="get" action="/mandi">
+      <input type="hidden" name="lang" value="{{ lang }}"/>
+      <input class="search-input" name="q" placeholder="{{ ui.mandi_search_ph }}"
+        value="{{ search }}" oninput="filterPrices(this.value)"/>
+      <button type="submit" class="btn btn-primary">{{ ui.mandi_all_crops }}</button>
+    </form>
+  </div>
+
+  <div class="sec-head fade-in-1">
+    <div class="sec-head-icon">📊</div>
+    {{ ui.mandi_prices_title }}
+    {% if prices %}<span style="font-size:.85rem;font-weight:500;color:var(--gray3);">({{ prices|length }} commodities)</span>{% endif %}
+  </div>
+
+  {% if prices %}
+  <div class="prices-grid fade-in-2" id="pricesGrid">
+    {% for crop, data in prices.items() %}
+    <div class="price-card"
+         onclick="openPriceModal('{{ crop }}',{{ data.modal }},{{ data.min }},{{ data.max }},'{{ data.unit }}','{{ data.market }}','{{ data.district }}')"
+         data-crop="{{ crop }}">
+      <div class="pc-crop">{{ crop }}</div>
+      <div class="pc-modal">
+        ₹{{ '{:,.0f}'.format(data.modal) }}
+        <span class="pc-unit">{{ data.unit }}</span>
+      </div>
+      <div class="pc-range">Min ₹{{ '{:,.0f}'.format(data.min) }} — Max ₹{{ '{:,.0f}'.format(data.max) }}</div>
+      <div class="pc-market">📍 {{ data.market }}</div>
+      {% if data.date %}<div class="pc-date">📅 {{ data.date }}</div>{% endif %}
+      <div class="pc-bar-bg">
+        {% if data.max > data.min %}
+        {% set pct = ((data.modal - data.min) / (data.max - data.min) * 100)|int %}
+        {% else %}{% set pct = 50 %}{% endif %}
+        <div class="pc-bar-fill" style="width:{{ pct }}%"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state fade-in-2">
+    <span class="empty-state-icon">📊</span>
+    <strong>No mandi data available right now</strong><br/>
+    <span style="font-size:.82rem;">AGMARKNET data may take a moment to load. Try refreshing or search for a specific crop.</span>
+    <br/><br/>
+    <a href="/mandi?lang={{ lang }}" class="btn btn-primary btn-sm">🔄 Refresh</a>
+  </div>
+  {% endif %}
+
+  <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--r);padding:1rem 1.2rem;font-size:.8rem;color:#a16207;margin-top:1rem;">
+    {{ ui.mandi_disclaimer }}
+  </div>
+
+  <footer>{{ ui.mandi_footer }}</footer>
+</div>
+
+<!-- PRICE DETAIL MODAL -->
+<div class="price-modal-bg" id="priceModalBg" onclick="closePriceModal(event)">
+  <div class="price-modal">
+    <div class="pm-title" id="pmCrop"></div>
+    <div class="pm-grid">
+      <div class="pm-stat"><div class="pm-stat-val pm-blue" id="pmMin"></div><div class="pm-stat-lbl">{{ ui.mandi_modal_min }}</div></div>
+      <div class="pm-stat"><div class="pm-stat-val pm-green" id="pmModal"></div><div class="pm-stat-lbl">{{ ui.mandi_modal_modal }}</div></div>
+      <div class="pm-stat"><div class="pm-stat-val pm-yellow" id="pmMax"></div><div class="pm-stat-lbl">{{ ui.mandi_modal_max }}</div></div>
+    </div>
+    <div style="font-size:.82rem;color:var(--gray3);margin-bottom:1.25rem;" id="pmMarket"></div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="shareToWhatsApp()">{{ ui.mandi_share_wa }}</button>
+      <button class="btn btn-secondary" onclick="closePriceModal()">{{ ui.mandi_close }}</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentCropData = {};
+function openPriceModal(crop, modal, min, max, unit, market, district) {
+  currentCropData = {crop, modal, min, max, unit, market};
+  document.getElementById('pmCrop').textContent = crop;
+  const fmt = n => '₹' + Number(n).toLocaleString('en-IN') + ' ' + unit;
+  document.getElementById('pmMin').textContent   = fmt(min);
+  document.getElementById('pmModal').textContent = fmt(modal);
+  document.getElementById('pmMax').textContent   = fmt(max);
+  document.getElementById('pmMarket').textContent = '📍 ' + market + ' · ' + district;
+  document.getElementById('priceModalBg').classList.add('open');
+}
+function closePriceModal(e) {
+  if (!e || e.target === document.getElementById('priceModalBg'))
+    document.getElementById('priceModalBg').classList.remove('open');
+}
+function shareToWhatsApp() {
+  const d = currentCropData;
+  const msg = `🌾 *Mandi Price — ${d.crop.toUpperCase()}*\n\n📊 Modal: ₹${Number(d.modal).toLocaleString('en-IN')} ${d.unit}\n📉 Min: ₹${d.min} · 📈 Max: ₹${d.max}\n📍 ${d.market}\n\n_KisaanSeva — AGMARKNET Live Prices_`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+function filterPrices(q) {
+  document.querySelectorAll('.price-card').forEach(c => {
+    c.style.display = c.dataset.crop.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

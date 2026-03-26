@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Post Details{% endblock %}
+
+{% block extra_head %}
+<style>
+.post-detail { background:var(--card); border:1px solid var(--leaf-pale); border-radius:var(--r-lg); padding:1.5rem; margin-bottom:1rem; }
+.post-title { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:var(--gray4); margin-bottom:.5rem; line-height:1.35; }
+.post-meta { font-size:.78rem; color:var(--gray3); display:flex; gap:.75rem; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:.75rem; border-bottom:1px solid var(--leaf-pale); }
+.post-body { font-size:.9rem; line-height:1.7; color:var(--gray4); }
+
+.reply-card { border-top:1px solid var(--gray2); padding:.9rem 0; }
+.reply-author { font-weight:700; font-size:.85rem; color:var(--gray4); display:flex; align-items:center; gap:6px; }
+.reply-date { font-size:.7rem; color:var(--gray3); }
+.reply-body { font-size:.85rem; line-height:1.6; color:var(--gray4); margin-top:.3rem; }
+.expert-badge { background:#dbeafe; color:#1d4ed8; padding:2px 8px; border-radius:100px; font-size:.65rem; font-weight:700; }
+
+.upvote-btn { display:inline-flex; align-items:center; gap:5px; padding:.4rem .9rem; border-radius:100px; border:1.5px solid var(--leaf-pale); background:white; color:var(--gray3); font-size:.78rem; font-weight:700; cursor:pointer; transition:all .15s; }
+.upvote-btn:hover { border-color:var(--leaf); color:var(--leaf); background:var(--leaf-mist); }
+.upvote-btn.voted { background:var(--leaf); color:white; border-color:var(--leaf); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page" style="max-width:760px;">
+
+  <a href="/community?lang={{ lang }}" style="display:inline-flex;align-items:center;gap:5px;color:var(--leaf);font-size:.82rem;font-weight:700;text-decoration:none;margin-bottom:1rem;">
+    ← Back to Community
+  </a>
+
+  <!-- POST -->
+  <div class="post-detail fade-in">
+    <div style="display:flex;gap:6px;margin-bottom:.75rem;">
+      <span class="badge badge-{{ {'disease':'red','scheme':'blue','market':'yellow','general':'green','variety':'green','water':'blue','soil':'orange','equipment':'gray'}.get(post.category,'gray') }}">
+        {{ {'general':'💬 General','disease':'🔴 Disease','variety':'🌾 Variety','scheme':'📋 Scheme','market':'💰 Market','water':'💧 Water','soil':'🪱 Soil','equipment':'⚙️ Equipment'}.get(post.category, post.category) }}
+      </span>
+    </div>
+    <div class="post-title">{{ post.title }}</div>
+    <div class="post-meta">
+      <span>👤 <strong>{{ post.author_name }}</strong></span>
+      {% if post.location %}<span>📍 {{ post.location }}</span>{% endif %}
+      <span>🕐 {{ post.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+      <span>👍 {{ post.upvotes }} upvotes</span>
+    </div>
+    <div class="post-body">{{ post.body }}</div>
+    <div style="margin-top:1rem;display:flex;gap:.75rem;align-items:center;">
+      <button class="upvote-btn" id="upvoteBtn" onclick="upvote({{ post.id }})">
+        👍 Upvote ({{ post.upvotes }})
+      </button>
+      <span style="font-size:.75rem;color:var(--gray3);">Help others find this post</span>
+    </div>
+  </div>
+
+  <!-- REPLIES -->
+  <div class="card fade-in-1" style="margin-bottom:1rem;">
+    <div class="sec-head" style="margin-bottom:.5rem;">
+      <div class="sec-head-icon">💬</div>
+      {{ replies|length }} Replies
+    </div>
+
+    {% if replies %}
+    {% for r in replies %}
+    <div class="reply-card">
+      <div class="reply-author">
+        {% if r.is_expert %}🎓{% else %}👤{% endif %}
+        {{ r.author_name }}
+        {% if r.is_expert %}<span class="expert-badge">Expert</span>{% endif %}
+        <span class="reply-date">· {{ r.created_at.strftime('%d %b %Y') }}</span>
+      </div>
+      <div class="reply-body">{{ r.body }}</div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p style="color:var(--gray3);text-align:center;padding:1rem 0;">No replies yet. Be the first to help!</p>
+    {% endif %}
+  </div>
+
+  <!-- ADD REPLY -->
+  <div class="card fade-in-2">
+    <div class="sec-head" style="margin-bottom:.75rem;">
+      <div class="sec-head-icon">✍️</div>
+      Add Reply
+    </div>
+
+    {% if user %}
+    <div style="font-size:.8rem;color:var(--leaf);margin-bottom:.75rem;">
+      Replying as <strong>{{ user.name }}</strong>
+    </div>
+    <form method="POST" action="/community/post/{{ post.id }}?lang={{ lang }}">
+      <input type="hidden" name="lang" value="{{ lang }}"/>
+      <div class="field">
+        <textarea name="body" class="field-textarea" style="min-height:100px;" required
+          placeholder="Share your experience, advice or solution..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Post Reply</button>
+    </form>
+    {% else %}
+    <div style="text-align:center;padding:1.25rem;background:var(--gray1);border-radius:var(--r);">
+      <p style="color:var(--gray3);margin-bottom:.75rem;font-size:.85rem;">Login to reply to this post</p>
+      <a href="/login?lang={{ lang }}&next=/community/post/{{ post.id }}?lang={{ lang }}" class="btn btn-primary">Login / Register</a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function upvote(postId) {
+  fetch('/community/upvote/' + postId, {method:'POST'})
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        const btn = document.getElementById('upvoteBtn');
+        btn.classList.add('voted');
+        btn.disabled = true;
+        btn.innerHTML = '👍 Upvoted!';
+      }
+    });
+}
+</script>
+{% endblock %}

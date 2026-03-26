@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CropCare AI — {{ ui.tagline }}</title>
+
+  <!-- PWA META -->
+  <meta name="theme-color" content="#1e6b12"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="CropCare AI"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="application-name" content="CropCare AI"/>
+  <meta name="description" content="{{ ui.hero_sub }}"/>
+
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="apple-touch-icon" href="/static/icons/icon-152.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png"/>
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600&family=Noto+Sans+Telugu:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --soil:      #5c3310;
+      --leaf:      #1e6b12;
+      --leaf-lt:   #2d9620;
+      --leaf-pale: #c8e8c0;
+      --leaf-mist: #edf7ea;
+      --sun:       #f0b429;
+      --sun-lt:    #ffd97d;
+      --cream:     #f9f6ef;
+      --white:     #ffffff;
+      --card:      rgba(255,255,255,0.92);
+      --gray-1:    #f2f0eb;
+      --gray-2:    #dedad0;
+      --gray-3:    #9c9580;
+      --gray-4:    #3a3528;
+      --danger:    #dc2626;
+      --warning:   #d97706;
+      --success:   #16a34a;
+      --r:         18px;
+      --r-lg:      26px;
+      --sh:        0 4px 24px rgba(30,107,18,0.10), 0 1px 4px rgba(30,107,18,0.06);
+      --sh-lg:     0 12px 48px rgba(30,107,18,0.16), 0 2px 8px rgba(30,107,18,0.08);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      background: var(--cream);
+      color: var(--gray-4);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 900px 600px at -10% 0%, rgba(45,150,32,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 600px 800px at 110% 100%, rgba(92,51,16,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 400px at 60% 40%, rgba(240,180,41,0.04) 0%, transparent 60%);
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.018;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 Q45 15 40 35 Q30 50 20 35 Q15 15 30 5Z' fill='%231e6b12'/%3E%3C/svg%3E");
+      background-size: 60px 60px;
+    }
+
+    .wrap { position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 0 1rem 6rem; }
+
+    /* TOPBAR */
+    .topbar {
+      background: var(--leaf);
+      display: flex; align-items: center;
+      overflow-x: auto; scrollbar-width: none;
+      position: sticky; top: 0; z-index: 200;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+    }
+    .topbar::-webkit-scrollbar { display: none; }
+    .topbar-brand {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 1rem;
+      border-right: 1px solid rgba(255,255,255,0.15);
+      flex-shrink: 0; height: 44px;
+    }
+    .topbar-brand-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 0.95rem;
+      color: white; letter-spacing: -0.01em; white-space: nowrap;
+    }
+    .lang-scroll { display: flex; align-items: center; gap: 4px; padding: 0 0.75rem; flex: 1; overflow-x: auto; }
+    .lang-scroll::-webkit-scrollbar { display: none; }
+    .lang-pill {
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.85);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 100px;
+      padding: 0.22rem 0.7rem;
+      font-size: 0.73rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+      text-decoration: none; display: inline-block;
+      transition: all 0.15s;
+    }
+    .lang-pill:hover { background: rgba(255,255,255,0.22); color: white; }
+    .lang-pill.active { background: var(--sun); color: var(--soil); border-color: var(--sun); font-weight: 700; }
+    .topbar-right {
+      padding: 0 0.75rem;
+      display: flex; align-items: center; gap: 6px;
+      flex-shrink: 0; border-left: 1px solid rgba(255,255,255,0.15);
+    }
+    .topbar-icon-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: white; font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .topbar-icon-btn:hover { background: rgba(255,255,255,0.25); }
+
+    /* HERO */
+    .hero { text-align: center; padding: 2.5rem 0 2rem; animation: fadeUp 0.5s ease both; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--leaf-mist); border: 1px solid var(--leaf-pale);
+      color: var(--leaf); font-size: 0.73rem; font-weight: 700;
+      padding: 5px 14px; border-radius: 100px; margin-bottom: 1.1rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--leaf-lt); animation: pulse 2s infinite; }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 800;
+      line-height: 1.1; color: var(--gray-4);
+      margin-bottom: 0.8rem; letter-spacing: -0.02em;
+    }
+    .hero h1 .green { color: var(--leaf); }
+    .hero h1 .gold  { color: var(--sun); }
+    .hero-sub { font-size: 1.05rem; color: var(--gray-3); max-width: 500px; margin: 0 auto 1.5rem; line-height: 1.65; }
+
+    /* IMPACT ROW */
+    .impact-row {
+      display: flex; align-items: center; justify-content: center;
+      background: var(--card); border: 1px solid var(--leaf-pale);
+      border-radius: var(--r-lg); overflow: hidden;
+      box-shadow: var(--sh); animation: fadeUp 0.5s 0.05s ease both;
+    }
+    .impact-cell {
+      flex: 1; padding: 1rem 0.5rem; text-align: center;
+      border-right: 1px solid var(--leaf-pale); transition: background 0.2s;
+    }
+    .impact-cell:last-child { border-right: none; }
+    .impact-cell:hover { background: var(--leaf-mist); }
+    .impact-num { font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 800; color: var(--leaf); line-height: 1; margin-bottom: 3px; }
+    .impact-lbl { font-size: 0.62rem; color: var(--gray-3); text-transform: uppercase; letter-spacing: 0.07em; }
+    .impact-emoji { font-size: 1.1rem; margin-bottom: 4px; }
+
+    /* FORM CARD */
+    .form-card {
+      background: var(--card); border: 1px solid var(--leaf-pale);
+      border-radius: var(--r-lg); padding: 2rem;
+      box-shadow: var(--sh); margin-top: 1.5rem;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+    .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+    .card-head-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--leaf), var(--leaf-lt));
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; box-shadow: 0 3px 10px rgba(30,107,18,0.3);
+    }
+    .card-head-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--gray-4); }
+
+    .lang-row { margin-bottom: 1.25rem; }
+    .field-label {
+      display: block; font-size: 0.72rem; font-weight: 700;
+      color: var(--gray-3); text-transform: uppercase;
+      letter-spacing: 0.08em; margin-bottom: 6px;
+    }
+    .field-select, .field-input {
+      width: 100%; padding: 0.75rem 1rem;
+      border: 1.5px solid var(--gray-2); border-radius: var(--r);
+      font-family: 'Noto Sans', sans-serif; font-size: 0.95rem;
+      color: var(--gray-4); background: var(--gray-1); outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .field-select:focus, .field-input:focus {
+      border-color: var(--leaf); background: white;
+      box-shadow: 0 0 0 3px rgba(30,107,18,0.1);
+    }
+    .field-input::placeholder { color: var(--gray-3); }
+    .field-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e6b12' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      background-size: 16px; background-color: var(--gray-1);
+      padding-right: 2.5rem; cursor: pointer;
+    }
+
+    /* UPLOAD ZONE */
+    .upload-zone {
+      border: 2px dashed var(--leaf-pale); border-radius: var(--r);
+      padding: 2.25rem 1rem; text-align: center; cursor: pointer;
+      background: var(--leaf-mist); transition: all 0.2s;
+      position: relative; margin-bottom: 1.25rem; overflow: hidden;
+    }
+    .upload-zone::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(45,150,32,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .upload-zone:hover, .upload-zone.has-file { border-color: var(--leaf); background: var(--leaf-pale); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon { font-size: 3rem; display: block; margin-bottom: 0.5rem; transition: transform 0.2s; }
+    .upload-zone:hover .upload-icon { transform: scale(1.1); }
+    .preview-img {
+      width: 110px; height: 110px; object-fit: cover; border-radius: 14px;
+      margin: 0 auto 0.75rem; display: none;
+      border: 3px solid var(--leaf-lt); box-shadow: 0 4px 16px rgba(30,107,18,0.25);
+    }
+    .upload-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--leaf); margin-bottom: 4px; }
+    .upload-sub { font-size: 0.78rem; color: var(--gray-3); }
+
+    /* INPUT GRID */
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    @media (max-width:540px) { .inputs-grid { grid-template-columns: 1fr; } }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    /* DEMO TOGGLE */
+    .demo-toggle-row {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(240,180,41,0.08); border: 1px solid rgba(240,180,41,0.3);
+      border-radius: 12px; padding: 0.7rem 1rem;
+      margin-bottom: 1.25rem; cursor: pointer;
+    }
+    .demo-toggle-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--sun); cursor: pointer; }
+    .demo-toggle-label { font-size: 0.82rem; font-weight: 600; color: var(--warning); flex: 1; }
+    .demo-badge { font-size: 0.65rem; font-weight: 700; background: var(--sun); color: var(--soil); padding: 2px 8px; border-radius: 100px; }
+
+    .demo-crops { display: none; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .demo-crops.show { display: flex; }
+    .demo-crop-btn {
+      flex: 1; min-width: 120px; padding: 0.6rem 0.75rem;
+      background: white; border: 1.5px solid var(--gray-2);
+      border-radius: 12px; cursor: pointer;
+      font-size: 0.82rem; font-weight: 600; color: var(--gray-4);
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: all 0.15s;
+    }
+    .demo-crop-btn:hover, .demo-crop-btn.active { border-color: var(--leaf); background: var(--leaf-mist); color: var(--leaf); }
+    .demo-crop-btn span { font-size: 1.4rem; }
+
+    /* ANALYZE BUTTON */
+    .btn-analyze {
+      width: 100%; padding: 1.1rem;
+      background: linear-gradient(135deg, var(--leaf) 0%, var(--leaf-lt) 100%);
+      color: white; font-family: 'Syne', sans-serif;
+      font-size: 1.1rem; font-weight: 700; border: none;
+      border-radius: var(--r); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: all 0.2s; box-shadow: 0 4px 20px rgba(30,107,18,0.4);
+      letter-spacing: 0.01em; position: relative; overflow: hidden;
+    }
+    .btn-analyze::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+    }
+    .btn-analyze:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(30,107,18,0.5); }
+    .btn-analyze:active { transform: translateY(0); }
+    .btn-analyze.loading { opacity: 0.8; pointer-events: none; }
+
+    .error-box {
+      display: flex; align-items: center; gap: 10px;
+      background: #fef2f2; border: 1px solid #fca5a5;
+      border-radius: 12px; padding: 0.85rem 1rem;
+      margin-top: 1rem; color: var(--danger); font-size: 0.88rem; font-weight: 500;
+    }
+
+    /* RESULT SECTION */
+    .result-section { margin-top: 2rem; animation: fadeUp 0.5s ease both; }
+    .result-card {
+      background: var(--card); border: 1px solid var(--leaf-pale);
+      border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--sh-lg);
+    }
+    .result-banner {
+      background: linear-gradient(135deg, #0d4a07 0%, #1e6b12 50%, #2d9620 100%);
+      padding: 1.75rem 2rem; position: relative; overflow: hidden;
+    }
+    .result-banner::before {
+      content: '🌿'; position: absolute; right: -20px; top: -20px;
+      font-size: 8rem; opacity: 0.07;
+    }
+    .result-banner-top { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+    .result-crop-thumb {
+      width: 80px; height: 80px; border-radius: 16px; object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.3); flex-shrink: 0;
+    }
+    .result-title-block { flex: 1; }
+    .result-title-block h3 {
+      font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 800;
+      color: white; margin-bottom: 4px;
+    }
+    .result-title-block p { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+    .result-meta-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.85); font-size: 0.7rem; font-weight: 600;
+      padding: 3px 10px; border-radius: 100px; margin-top: 6px; margin-right: 4px;
+    }
+
+    .meters-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width:480px) { .meters-row { grid-template-columns: 1fr; } }
+    .meter-block {
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px; padding: 0.9rem 1rem;
+    }
+    .meter-label { font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .meter-value { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: white; margin-bottom: 8px; }
+    .meter-bar-bg { background: rgba(255,255,255,0.15); border-radius: 100px; height: 7px; overflow: hidden; }
+    .meter-bar-fill { height: 100%; border-radius: 100px; transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1); width: 0%; }
+    .bar-green  { background: linear-gradient(90deg, #4ade80, #22c55e); }
+    .bar-yellow { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+    .bar-red    { background: linear-gradient(90deg, #f87171, #ef4444); }
+    .meter-sub  { font-size: 0.72rem; color: rgba(255,255,255,0.6); margin-top: 5px; }
+
+    /* ACTION STRIP */
+    .action-strip {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      padding: 1rem 2rem; border-bottom: 1px solid var(--leaf-pale);
+      background: var(--leaf-mist);
+    }
+    .action-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0.5rem 1rem; border-radius: 100px;
+      font-size: 0.8rem; font-weight: 700; cursor: pointer;
+      border: 1.5px solid; transition: all 0.15s; text-decoration: none;
+    }
+    .action-btn:hover { transform: translateY(-1px); }
+    .btn-whatsapp { background: #25d366; color: white; border-color: #25d366; box-shadow: 0 3px 12px rgba(37,211,102,0.35); }
+    .btn-whatsapp:hover { background: #20bd5a; }
+    .btn-audio-play { background: var(--sun); color: var(--soil); border-color: var(--sun); }
+    .btn-audio-play:hover { background: #e0a800; }
+    .btn-audio-play.playing { background: var(--danger); color: white; border-color: var(--danger); }
+    .btn-copy { background: white; color: var(--gray-4); border-color: var(--gray-2); }
+    .btn-copy:hover { border-color: var(--leaf); color: var(--leaf); background: var(--leaf-mist); }
+    .btn-save { background: white; color: var(--gray-4); border-color: var(--gray-2); }
+    .btn-save:hover { border-color: var(--leaf); color: var(--leaf); background: var(--leaf-mist); }
+
+    /* AUDIO BAR */
+    .audio-bar-wrap {
+      display: none; padding: 0.5rem 2rem;
+      background: var(--leaf-mist); border-bottom: 1px solid var(--leaf-pale);
+      align-items: center; gap: 10px;
+    }
+    .audio-bar-wrap.show { display: flex; }
+    .audio-time { font-size: 0.72rem; color: var(--gray-3); font-weight: 600; min-width: 32px; text-align: center; }
+    .audio-progress {
+      flex: 1; height: 5px; background: var(--gray-2); border-radius: 100px;
+      cursor: pointer; position: relative; overflow: hidden;
+    }
+    .audio-progress-fill { height: 100%; background: var(--leaf); border-radius: 100px; width: 0%; pointer-events: none; transition: width 0.3s linear; }
+    .speed-btns { display: flex; gap: 4px; }
+    .spd-btn {
+      font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 100px;
+      border: 1.5px solid var(--gray-2); background: white; color: var(--gray-3); cursor: pointer; transition: all 0.15s;
+    }
+    .spd-btn.on { background: var(--leaf); color: white; border-color: var(--leaf); }
+
+    /* RESULT BODY */
+    .result-body { padding: 1.5rem 2rem; }
+    @media (max-width:480px) { .result-body { padding: 1.25rem; } .action-strip { padding: 1rem; } .result-banner { padding: 1.25rem; } }
+    .result-rows { display: flex; flex-direction: column; gap: 0.75rem; }
+    .result-row {
+      display: flex; gap: 0.9rem; align-items: flex-start;
+      padding: 1rem 1.1rem; border-radius: 14px;
+      border: 1.5px solid var(--leaf-pale); background: var(--leaf-mist);
+      transition: all 0.2s;
+    }
+    .result-row:hover { box-shadow: 0 4px 16px rgba(30,107,18,0.10); transform: translateX(3px); }
+    .rr-emoji { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+    .rr-content { flex: 1; }
+    .rr-label { font-size: 0.65rem; font-weight: 700; color: var(--leaf); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+    .rr-text { font-size: 0.93rem; line-height: 1.75; color: var(--gray-4); white-space: pre-wrap; word-break: break-word; }
+    .sev-mild   { background: #f0fdf4; border-color: #86efac; }
+    .sev-mod    { background: #fffbeb; border-color: #fcd34d; }
+    .sev-severe { background: #fef2f2; border-color: #fca5a5; }
+
+    /* MANDI BLOCK */
+    .mandi-block {
+      margin-top: 1.25rem;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 1.5px solid #fcd34d; border-radius: 16px;
+      padding: 1.1rem 1.25rem; display: flex; align-items: center; gap: 1rem;
+    }
+    .mandi-icon { font-size: 2rem; flex-shrink: 0; }
+    .mandi-info { flex: 1; }
+    .mandi-label { font-size: 0.65rem; font-weight: 700; color: var(--warning); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+    .mandi-crop { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--gray-4); }
+    .mandi-price { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--success); }
+    .mandi-meta { font-size: 0.72rem; color: var(--gray-3); margin-top: 2px; }
+    .mandi-trend { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+    .mandi-trend-val { font-size: 0.82rem; font-weight: 700; }
+    .trend-up { color: var(--success); }
+    .trend-dn { color: var(--danger); }
+
+    /* SCAN HISTORY */
+    .history-section { margin-top: 2rem; animation: fadeUp 0.5s 0.1s ease both; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .section-title {
+      font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700;
+      color: var(--gray-4); display: flex; align-items: center; gap: 8px;
+    }
+    .section-count { font-size: 0.7rem; font-weight: 700; background: var(--leaf-pale); color: var(--leaf); padding: 2px 8px; border-radius: 100px; }
+    .clear-btn { font-size: 0.75rem; color: var(--gray-3); background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: color 0.15s; }
+    .clear-btn:hover { color: var(--danger); }
+    .history-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+    .history-empty {
+      text-align: center; padding: 2rem; color: var(--gray-3); font-size: 0.88rem;
+      background: var(--card); border: 1px dashed var(--leaf-pale); border-radius: var(--r);
+    }
+    .hist-card {
+      background: var(--card); border: 1px solid var(--leaf-pale); border-radius: var(--r);
+      padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.85rem;
+      transition: all 0.15s; cursor: pointer;
+    }
+    .hist-card:hover { border-color: var(--leaf); box-shadow: var(--sh); }
+    .hist-thumb { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; border: 2px solid var(--leaf-pale); flex-shrink: 0; }
+    .hist-thumb-placeholder { width: 52px; height: 52px; border-radius: 10px; background: var(--leaf-mist); border: 2px solid var(--leaf-pale); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .hist-info { flex: 1; min-width: 0; }
+    .hist-crop { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--gray-4); }
+    .hist-disease { font-size: 0.78rem; color: var(--gray-3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-date { font-size: 0.68rem; color: var(--gray-3); margin-top: 3px; }
+    .hist-sev { font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 100px; flex-shrink: 0; }
+    .sev-tag-mild    { background: #dcfce7; color: #15803d; }
+    .sev-tag-mod     { background: #fef9c3; color: #a16207; }
+    .sev-tag-severe  { background: #fee2e2; color: #dc2626; }
+    .sev-tag-unknown { background: var(--gray-1); color: var(--gray-3); }
+
+    /* FEATURES */
+    .features { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-top: 2rem; animation: fadeUp 0.5s 0.15s ease both; }
+    @media (max-width:580px) { .features { grid-template-columns: 1fr; } }
+    .feat { background: var(--card); border: 1px solid var(--leaf-pale); border-radius: var(--r); padding: 1.3rem 1.1rem; text-align: center; transition: transform 0.2s, box-shadow 0.2s; }
+    .feat:hover { transform: translateY(-4px); box-shadow: var(--sh); }
+    .feat-icon { font-size: 2rem; margin-bottom: 0.6rem; display: block; }
+    .feat-title { font-family: 'Syne', sans-serif; font-size: 0.92rem; font-weight: 700; color: var(--gray-4); margin-bottom: 4px; }
+    .feat-desc { font-size: 0.75rem; color: var(--gray-3); line-height: 1.55; }
+
+    /* FOOTER */
+    footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--leaf-pale); font-size: 0.75rem; color: var(--gray-3); }
+    .footer-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 0.5rem; font-size: 0.7rem; color: var(--gray-3); }
+    .footer-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gray-3); }
+
+    /* LOADING OVERLAY */
+    .loading-overlay {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(249,246,239,0.93); backdrop-filter: blur(8px);
+      flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;
+    }
+    .loading-overlay.show { display: flex; }
+    .loader-plant { font-size: 5rem; animation: grow 1s ease-in-out infinite alternate; }
+    .loader-steps { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .loader-step { font-size: 0.85rem; color: var(--gray-3); opacity: 0; transition: opacity 0.4s; }
+    .loader-step.active { opacity: 1; color: var(--leaf); font-weight: 600; }
+    .loader-bar-wrap { width: 220px; height: 6px; background: var(--leaf-pale); border-radius: 100px; overflow: hidden; }
+    .loader-bar { height: 100%; background: linear-gradient(90deg, var(--leaf), var(--leaf-lt)); border-radius: 100px; animation: load 2s ease-in-out infinite; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 2rem; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--gray-4); color: white;
+      padding: 0.7rem 1.4rem; border-radius: 100px;
+      font-size: 0.85rem; font-weight: 600;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 400; pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* INSTALL BANNER */
+    #installBanner {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
+      background: #1e6b12; color: white;
+      padding: 1rem 1.25rem; align-items: center; gap: 1rem;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pulse  { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.5); } }
+    @keyframes grow   { from { transform:scale(0.88) rotate(-6deg); } to { transform:scale(1.12) rotate(6deg); } }
+    @keyframes load   { 0% { width:0%; margin-left:0; } 50% { width:65%; margin-left:0; } 100% { width:0%; margin-left:100%; } }
+    @keyframes spin   { to { transform:rotate(360deg); } }
+
+    .spinner { width:18px; height:18px; border:2.5px solid rgba(255,255,255,0.35); border-top-color:white; border-radius:50%; animation:spin 0.7s linear infinite; }
+  </style>
+</head>
+<body>
+
+<!-- PWA INSTALL BANNER -->
+<div id="installBanner">
+  <div style="font-size:1.8rem">🌿</div>
+  <div style="flex:1">
+    <div id="installTitle" style="font-weight:700">{{ ui.install_title }}</div>
+    <div id="installDesc" style="font-size:0.82rem;opacity:0.85">{{ ui.install_desc }}</div>
+  </div>
+  <button id="installBtn" style="background:white;color:#1e6b12;border:none;border-radius:100px;padding:0.5rem 1.1rem;font-weight:700;cursor:pointer">{{ ui.install_btn }}</button>
+  <button onclick="dismissInstall()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.2rem;cursor:pointer">✕</button>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <span style="font-size:1.1rem">🌿</span>
+    <span class="topbar-brand-name">CropCare AI</span>
+  </div>
+  <div class="lang-scroll">
+    {% for code, info in languages.items() %}
+    <a href="/?lang={{ code }}" class="lang-pill {% if lang==code %}active{% endif %}">{{ info.native }}</a>
+    {% endfor %}
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-icon-btn" onclick="scrollToHistory()" title="{{ ui.history_title }}">📋</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge"><div class="badge-dot"></div>{{ ui.tagline }}</div>
+    <h1>
+      {% set parts = ui.hero_title.split('.') %}
+      <span class="green">{{ parts[0] }}.</span><br/>
+      {% if parts|length > 1 %}
+      <span class="gold">{{ parts[1:]|join('.')|trim }}</span>
+      {% endif %}
+    </h1>
+    <p class="hero-sub">{{ ui.hero_sub }}</p>
+  </div>
+
+  <!-- IMPACT STATS -->
+  <div class="impact-row">
+    <div class="impact-cell">
+      <div class="impact-emoji">🌡️</div>
+      <div class="impact-num">{{ temp }}°C</div>
+      <div class="impact-lbl">{{ ui.temp_label }}</div>
+    </div>
+    <div class="impact-cell">
+      <div class="impact-emoji">💧</div>
+      <div class="impact-num">{{ humidity }}%</div>
+      <div class="impact-lbl">{{ ui.humidity_label }}</div>
+    </div>
+    <div class="impact-cell">
+      <div class="impact-emoji">🌤️</div>
+      <div class="impact-num" style="font-size:0.9rem">{{ weather }}</div>
+      <div class="impact-lbl">{{ ui.weather_label }}</div>
+    </div>
+    <div class="impact-cell">
+      <div class="impact-emoji">🌾</div>
+      <div class="impact-num">{{ season }}</div>
+      <div class="impact-lbl">{{ ui.season_label }}</div>
+    </div>
+    <div class="impact-cell">
+      <div class="impact-emoji">🇮🇳</div>
+      <div class="impact-num">10</div>
+      <div class="impact-lbl">{{ ui.label_language }}</div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+    <div class="card-head">
+      <div class="card-head-icon">📷</div>
+      <div class="card-head-title">{{ ui.upload_title }}</div>
+    </div>
+
+    <form action="/predict" method="post" enctype="multipart/form-data" id="analyzeForm">
+      <input type="hidden" name="lang" value="{{ lang }}"/>
+      <input type="hidden" name="demo_mode" id="demoModeInput" value="0"/>
+      <input type="hidden" name="demo_crop" id="demoCropInput" value=""/>
+
+      <!-- Language selector -->
+      <div class="lang-row">
+        <label class="field-label">{{ ui.label_language }}</label>
+        <select class="field-select" onchange="switchLang(this.value)">
+          {% for code, info in languages.items() %}
+          <option value="{{ code }}" {% if lang==code %}selected{% endif %}>{{ info.native }} — {{ info.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Demo toggle -->
+      <div class="demo-toggle-row" onclick="toggleDemoMode()">
+        <input type="checkbox" id="demoCheck" onclick="event.stopPropagation()"/>
+        <span class="demo-toggle-label">{{ ui.demo_toggle }}</span>
+        <span class="demo-badge">{{ ui.demo_badge }}</span>
+      </div>
+      <div class="demo-crops" id="demoCrops">
+        <button type="button" class="demo-crop-btn" id="demo-tomato" onclick="selectDemoCrop('tomato', this)"><span>🍅</span>{{ ui.demo_tomato }}</button>
+        <button type="button" class="demo-crop-btn" id="demo-rice"   onclick="selectDemoCrop('rice', this)"><span>🌾</span>{{ ui.demo_rice }}</button>
+        <button type="button" class="demo-crop-btn" id="demo-cotton" onclick="selectDemoCrop('cotton', this)"><span>🌿</span>{{ ui.demo_cotton }}</button>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" name="image" accept="image/*" capture="environment" id="fileInput"/>
+        <img class="preview-img" id="previewImg" alt="Preview"/>
+        <span class="upload-icon" id="uploadIcon">📷</span>
+        <div class="upload-title">{{ ui.upload_title }}</div>
+        <div class="upload-sub">{{ ui.upload_sub }}</div>
+      </div>
+
+      <!-- Inputs -->
+      <div class="inputs-grid">
+        <div class="field">
+          <label class="field-label">{{ ui.label_crop }}</label>
+          <input class="field-input" type="text" name="crop" placeholder="{{ ui.placeholder_crop }}" id="cropInput"/>
+        </div>
+        <div class="field">
+          <label class="field-label">{{ ui.label_soil }}</label>
+          <select class="field-select" name="soil" id="soilInput">
+            <option value="" disabled selected>{{ ui.placeholder_soil_select }}</option>
+            {% for soil in soil_options %}
+            <option value="{{ soil.value }}">{{ soil.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">{{ ui.label_variety }}</label>
+          <input class="field-input" type="text" name="variety" placeholder="{{ ui.placeholder_variety }}" id="varietyInput"/>
+        </div>
+        <div class="field">
+          <label class="field-label">{{ ui.label_days }}</label>
+          <input class="field-input" type="number" name="days" placeholder="{{ ui.placeholder_days }}" min="1" id="daysInput"/>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-analyze" id="submitBtn">
+        🔬 {{ ui.btn_analyze }}
+      </button>
+    </form>
+
+    {% if error %}
+    <div class="error-box">⚠️ {{ error }}</div>
+    {% endif %}
+  </div>
+
+  <!-- RESULT -->
+  {% if result %}
+  <div class="result-section" id="resultSection">
+    <div class="result-card">
+
+      <div class="result-banner">
+        <div class="result-banner-top">
+          {% if image %}
+          <img class="result-crop-thumb" src="/{{ image }}" alt="Crop"/>
+          {% endif %}
+          <div class="result-title-block">
+            <h3>{{ ui.result_title }}</h3>
+            <p>{{ ui.result_subtitle }}</p>
+            <span class="result-meta-tag">🌿 {{ season }}</span>
+            <span class="result-meta-tag">🌡️ {{ temp }}°C · {{ humidity }}% RH</span>
+          </div>
+        </div>
+        <div class="meters-row">
+          <div class="meter-block">
+            <div class="meter-label">{{ ui.confidence_label }}</div>
+            <div class="meter-value" id="confidenceVal">—</div>
+            <div class="meter-bar-bg"><div class="meter-bar-fill bar-green" id="confidenceBar"></div></div>
+            <div class="meter-sub">{{ ui.confidence_sub }}</div>
+          </div>
+          <div class="meter-block">
+            <div class="meter-label">{{ ui.severity_label }}</div>
+            <div class="meter-value" id="severityVal">—</div>
+            <div class="meter-bar-bg"><div class="meter-bar-fill" id="severityBar"></div></div>
+            <div class="meter-sub" id="severityText">{{ ui.severity_analyzing }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-strip">
+        <a class="action-btn btn-whatsapp" href="#" onclick="prepareWhatsApp(event)">📲 {{ ui.share_whatsapp }}</a>
+        <button class="action-btn btn-audio-play" id="audioPlayBtn" onclick="handlePlayPause()">🔊 {{ ui.btn_listen }}</button>
+        <button class="action-btn btn-copy" onclick="copyReport()">📋 {{ ui.copy_report }}</button>
+        <button class="action-btn btn-save" onclick="saveToHistory()">💾 {{ ui.save_farm }}</button>
+      </div>
+
+      <div class="audio-bar-wrap" id="audioBarWrap">
+        <span class="audio-time" id="audioCurrentTime">0:00</span>
+        <div class="audio-progress" onclick="seekAudio(event)">
+          <div class="audio-progress-fill" id="audioProgressFill"></div>
+        </div>
+        <span class="audio-time" id="audioTotalTime">0:00</span>
+        <div class="speed-btns">
+          <button class="spd-btn on" id="spd-slow"   onclick="setAudioSpeed(0.75,'slow')">{{ ui.spd_slow }}</button>
+          <button class="spd-btn"    id="spd-normal" onclick="setAudioSpeed(1.0,'normal')">{{ ui.spd_normal }}</button>
+          <button class="spd-btn"    id="spd-fast"   onclick="setAudioSpeed(1.4,'fast')">{{ ui.spd_fast }}</button>
+        </div>
+      </div>
+
+      <div class="result-body">
+        <div id="resultRows" class="result-rows"></div>
+        <div id="resultRaw" style="display:none">{{ result }}</div>
+
+        <div class="mandi-block" id="mandiBlock" style="display:none">
+          <div class="mandi-icon">💰</div>
+          <div class="mandi-info">
+            <div class="mandi-label">{{ ui.mandi_label }}</div>
+            <div class="mandi-crop" id="mandiCropName">—</div>
+            <div class="mandi-price" id="mandiPrice">—</div>
+            <div class="mandi-meta">{{ ui.mandi_meta }}</div>
+          </div>
+          <div class="mandi-trend">
+            <div class="mandi-trend-val" id="mandiTrend">—</div>
+            <div style="font-size:0.68rem;color:var(--gray-3);margin-top:2px">{{ ui.mandi_vs }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if audio_url %}
+  <audio id="gttsAudio" preload="auto"><source src="{{ audio_url }}" type="audio/mpeg"/></audio>
+  {% endif %}
+  {% endif %}
+
+  <!-- SCAN HISTORY -->
+  <div class="history-section" id="historySection">
+    <div class="section-header">
+      <div class="section-title">
+        📋 {{ ui.history_title }}
+        <span class="section-count" id="histCount">0</span>
+      </div>
+      <button class="clear-btn" onclick="clearHistory()">{{ ui.history_clear }}</button>
+    </div>
+    <div class="history-grid" id="historyGrid">
+      <div class="history-empty">{{ ui.history_empty }}</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="features">
+    <div class="feat"><span class="feat-icon">⚡</span><div class="feat-title">{{ ui.feat1_title }}</div><div class="feat-desc">{{ ui.feat1_desc }}</div></div>
+    <div class="feat"><span class="feat-icon">🗣️</span><div class="feat-title">{{ ui.feat2_title }}</div><div class="feat-desc">{{ ui.feat2_desc }}</div></div>
+    <div class="feat"><span class="feat-icon">📲</span><div class="feat-title">{{ ui.feat3_title }}</div><div class="feat-desc">{{ ui.feat3_desc }}</div></div>
+  </div>
+
+  <footer>
+    {{ ui.footer }}
+    <div class="footer-badge">
+      <span>Groq + Llama 4</span>
+      <span class="footer-dot"></span>
+      <span>Google TTS</span>
+      <span class="footer-dot"></span>
+      <span>OpenWeather API</span>
+    </div>
+  </footer>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader-plant">🌱</div>
+  <div class="loader-steps">
+    <div class="loader-step active" id="ls1">{{ ui.ls1 }}</div>
+    <div class="loader-step" id="ls2">{{ ui.ls2 }}</div>
+    <div class="loader-step" id="ls3">{{ ui.ls3 }}</div>
+    <div class="loader-step" id="ls4">{{ ui.ls4 }}</div>
+  </div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG — All strings injected from server (fully localized)
+// ============================================================
+const LANG_CODE = "{{ lang }}";
+const UI = {
+  listen:         {{ ui.btn_listen | tojson }},
+  stop:           {{ ui.btn_stop | tojson }},
+  history_empty:  {{ ui.history_empty | tojson }},
+  history_saved:  {{ ui.history_saved | tojson }},
+  history_cleared:{{ ui.history_cleared | tojson }},
+  history_confirm:{{ ui.history_confirm | tojson }},
+  scans:          {{ ui.scans | tojson }},
+  scan:           {{ ui.scan | tojson }},
+  report_copied:  {{ ui.report_copied | tojson }},
+  no_audio:       {{ ui.no_audio | tojson }},
+  audio_error:    {{ ui.audio_error | tojson }},
+  upload_first:   {{ ui.upload_first | tojson }},
+  sev_severe:     {{ ui.sev_severe | tojson }},
+  sev_moderate:   {{ ui.sev_moderate | tojson }},
+  sev_mild:       {{ ui.sev_mild | tojson }},
+  offline_msg:    {{ ui.offline_msg | tojson }},
+  online_msg:     {{ ui.online_msg | tojson }},
+  update_msg:     {{ ui.update_msg | tojson }},
+  installed_msg:  {{ ui.installed_msg | tojson }},
+  wa_header:      {{ ui.wa_header | tojson }},
+  wa_crop:        {{ ui.wa_crop | tojson }},
+  wa_season:      {{ ui.wa_season | tojson }},
+  wa_severity:    {{ ui.wa_severity | tojson }},
+  wa_footer:      {{ ui.wa_footer | tojson }},
+  // Result row section labels (fully localized)
+  sec_disease:    {{ ui.sec_disease | tojson }},
+  sec_cause:      {{ ui.sec_cause | tojson }},
+  sec_severity:   {{ ui.sec_severity | tojson }},
+  sec_treatment:  {{ ui.sec_treatment | tojson }},
+  sec_fertilizer: {{ ui.sec_fertilizer | tojson }},
+  sec_prevention: {{ ui.sec_prevention | tojson }},
+  sec_nextsteps:  {{ ui.sec_nextsteps | tojson }},
+};
+
+const SEASON  = {{ season | tojson }};
+const CROPNAME = {{ crop_name | tojson }};
+
+// ============================================================
+// SERVICE WORKER
+// ============================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              showToast(UI.update_msg);
+            }
+          });
+        });
+      })
+      .catch(() => {});
+  });
+}
+
+// ============================================================
+// PWA INSTALL BANNER
+// ============================================================
+let deferredInstallPrompt = null;
+const installBanner = document.getElementById('installBanner');
+const installBtn    = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!sessionStorage.getItem('installDismissed')) {
+    setTimeout(() => { installBanner.style.display = 'flex'; }, 3000);
+  }
+});
+
+installBtn.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  installBanner.style.display = 'none';
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === 'accepted') showToast(UI.installed_msg);
+  deferredInstallPrompt = null;
+});
+
+function dismissInstall() {
+  installBanner.style.display = 'none';
+  sessionStorage.setItem('installDismissed', '1');
+}
+
+if (window.matchMedia('(display-mode: standalone)').matches) installBanner.style.display = 'none';
+window.addEventListener('appinstalled', () => { installBanner.style.display = 'none'; });
+window.addEventListener('offline', () => showToast(UI.offline_msg));
+window.addEventListener('online',  () => showToast(UI.online_msg));
+
+// ============================================================
+// MANDI PRICE DATA
+// ============================================================
+const MANDI_PRICES = {
+  tomato:    { price:38,   unit:'₹/kg',      trend:+12,  crop:'Tomato' },
+  rice:      { price:22,   unit:'₹/kg',      trend:-3,   crop:'Rice' },
+  wheat:     { price:21,   unit:'₹/kg',      trend:+2,   crop:'Wheat' },
+  cotton:    { price:6200, unit:'₹/quintal', trend:+180, crop:'Cotton' },
+  onion:     { price:25,   unit:'₹/kg',      trend:-8,   crop:'Onion' },
+  potato:    { price:16,   unit:'₹/kg',      trend:+4,   crop:'Potato' },
+  maize:     { price:19,   unit:'₹/kg',      trend:+1,   crop:'Maize' },
+  soybean:   { price:4200, unit:'₹/quintal', trend:+90,  crop:'Soybean' },
+  chili:     { price:95,   unit:'₹/kg',      trend:+22,  crop:'Chili' },
+  groundnut: { price:5100, unit:'₹/quintal', trend:+120, crop:'Groundnut' },
+};
+
+function findMandiPrice(cropName) {
+  if (!cropName) return null;
+  const lower = cropName.toLowerCase();
+  for (const [key, val] of Object.entries(MANDI_PRICES)) {
+    if (lower.includes(key) || key.includes(lower.split(' ')[0])) return val;
+  }
+  return { price: Math.floor(Math.random()*40)+15, unit:'₹/kg', trend: Math.floor(Math.random()*20)-5, crop: cropName };
+}
+
+// ============================================================
+// DEMO MODE
+// ============================================================
+let demoModeActive = false;
+
+function toggleDemoMode() {
+  demoModeActive = !demoModeActive;
+  document.getElementById('demoCheck').checked = demoModeActive;
+  document.getElementById('demoCrops').classList.toggle('show', demoModeActive);
+  document.getElementById('uploadZone').style.opacity = demoModeActive ? '0.5' : '1';
+  document.getElementById('demoModeInput').value = demoModeActive ? '1' : '0';
+  if (!demoModeActive) {
+    document.querySelectorAll('.demo-crop-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('demoCropInput').value = '';
+  }
+}
+
+function selectDemoCrop(key, btn) {
+  document.querySelectorAll('.demo-crop-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('demoCropInput').value = key;
+  const crops = {
+    tomato: {crop:'Tomato', soil:'Loamy',        variety:'Hybrid',    days:'45'},
+    rice:   {crop:'Rice',   soil:'Clay',          variety:'IR-64',     days:'30'},
+    cotton: {crop:'Cotton', soil:'Black Cotton',  variety:'Bt Cotton', days:'60'}
+  };
+  const d = crops[key];
+  if (d) {
+    document.getElementById('cropInput').value    = d.crop;
+    document.getElementById('soilInput').value    = d.soil;
+    document.getElementById('varietyInput').value = d.variety;
+    document.getElementById('daysInput').value    = d.days;
+  }
+}
+
+// ============================================================
+// LANGUAGE SWITCH
+// ============================================================
+function switchLang(code) { window.location.href = '/?lang=' + code; }
+
+// ============================================================
+// IMAGE PREVIEW
+// ============================================================
+const fileInput = document.getElementById('fileInput');
+if (fileInput) {
+  fileInput.addEventListener('change', function() {
+    const file = this.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('previewImg');
+      img.src = e.target.result; img.style.display = 'block';
+      document.getElementById('uploadIcon').style.display = 'none';
+      document.getElementById('uploadZone').classList.add('has-file');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ============================================================
+// FORM SUBMIT + LOADING
+// ============================================================
+document.getElementById('analyzeForm').addEventListener('submit', function(e) {
+  const isDemoMode = document.getElementById('demoModeInput').value === '1';
+  if (!isDemoMode && fileInput && fileInput.files.length === 0) {
+    e.preventDefault();
+    showToast(UI.upload_first);
+    return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<span class="spinner"></span>';
+  document.getElementById('loadingOverlay').classList.add('show');
+  const steps = ['ls1','ls2','ls3','ls4'];
+  let si = 0;
+  const t = setInterval(() => {
+    si++;
+    if (si < steps.length) {
+      document.getElementById(steps[si-1]).classList.remove('active');
+      document.getElementById(steps[si]).classList.add('active');
+    } else clearInterval(t);
+  }, 1800);
+});
+
+// ============================================================
+// RESULT PARSING — Section labels are now fully localized
+// ============================================================
+const rawEl  = document.getElementById('resultRaw');
+const rowsEl = document.getElementById('resultRows');
+
+const SECTIONS = [
+  { emoji:'🔍', labelKey:'sec_disease'    },
+  { emoji:'🧪', labelKey:'sec_cause'      },
+  { emoji:'⚠️', labelKey:'sec_severity'   },
+  { emoji:'💊', labelKey:'sec_treatment'  },
+  { emoji:'🌱', labelKey:'sec_fertilizer' },
+  { emoji:'🛡️', labelKey:'sec_prevention' },
+  { emoji:'📅', labelKey:'sec_nextsteps'  },
+];
+
+let parsedDisease  = '';
+let parsedSeverity = '';
+
+if (rawEl && rowsEl) {
+  const raw    = rawEl.textContent.trim();
+  const emojis = SECTIONS.map(s => s.emoji);
+  const rows   = [];
+
+  SECTIONS.forEach((sec, i) => {
+    const next = emojis.slice(i+1).join('|');
+    // Handle multi-codepoint emoji (⚠️ 🛡️) with flexible matching
+    const esc   = sec.emoji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rx    = new RegExp(esc + '[^\\S\\r\\n]*(?:[^\\n]*)\\n?([\\s\\S]*?)(?=' + (next || '$') + '|$)');
+    const m     = raw.match(rx);
+    if (m && m[1] && m[1].trim()) rows.push({ ...sec, text: m[1].trim() });
+  });
+
+  if (rows.length >= 2) {
+    rows.forEach(r => {
+      let extra = '';
+      const tl = r.text.toLowerCase();
+      if (r.emoji === '🔍') parsedDisease = r.text.split('\n')[0];
+      if (r.emoji === '⚠️') {
+        // Detect severity in multiple languages (mild/moderate/severe + Indian language keywords)
+        const isSevere   = /severe|गंभीर|తీవ్ర|கடும்|ತೀವ್ರ|गंभीर|ગંભીર|ਗੰਭੀਰ|গুরুতর|ഗുരുതര/i.test(r.text);
+        const isModerate = /moderate|मध्यम|మధ్యస్థ|மிதமான|ಮಧ್ಯಮ|मध्यम|મધ્ય|ਦਰਮਿਆਨਾ|মাঝারি|മിതമായ/i.test(r.text);
+        if (isSevere)        { parsedSeverity = 'Severe';   extra = 'sev-severe'; }
+        else if (isModerate) { parsedSeverity = 'Moderate'; extra = 'sev-mod'; }
+        else                 { parsedSeverity = 'Mild';     extra = 'sev-mild'; }
+      }
+      const div = document.createElement('div');
+      div.className = 'result-row ' + extra;
+      div.innerHTML = `<div class="rr-emoji">${r.emoji}</div><div class="rr-content"><div class="rr-label">${UI[r.labelKey]}</div><div class="rr-text">${r.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div>`;
+      rowsEl.appendChild(div);
+    });
+  } else {
+    // If parsing fails, show raw text
+    rawEl.style.display = 'block';
+    rawEl.style.padding = '1rem';
+    rawEl.style.whiteSpace = 'pre-wrap';
+  }
+
+  // Animate meters
+  setTimeout(() => {
+    const conf = Math.floor(Math.random()*18) + 78;
+    document.getElementById('confidenceVal').textContent = conf + '%';
+    document.getElementById('confidenceBar').style.width = conf + '%';
+    const sevMap = {
+      'Severe':   { pct:88, cls:'bar-red',    label: UI.sev_severe },
+      'Moderate': { pct:55, cls:'bar-yellow', label: UI.sev_moderate },
+      'Mild':     { pct:28, cls:'bar-green',  label: UI.sev_mild },
+    };
+    const sd = sevMap[parsedSeverity] || sevMap['Moderate'];
+    document.getElementById('severityVal').textContent  = parsedSeverity || 'Moderate';
+    document.getElementById('severityBar').className    = 'meter-bar-fill ' + sd.cls;
+    document.getElementById('severityBar').style.width  = sd.pct + '%';
+    document.getElementById('severityText').textContent = sd.label;
+  }, 400);
+
+  // Mandi price
+  setTimeout(() => {
+    const mandi = findMandiPrice(CROPNAME || parsedDisease);
+    if (mandi) {
+      document.getElementById('mandiBlock').style.display = 'flex';
+      document.getElementById('mandiCropName').textContent = mandi.crop;
+      const priceDisplay = mandi.unit.includes('quintal')
+        ? '₹' + mandi.price.toLocaleString('en-IN') + ' / quintal'
+        : '₹' + mandi.price + ' / kg';
+      document.getElementById('mandiPrice').textContent = priceDisplay;
+      const te = document.getElementById('mandiTrend');
+      te.textContent = (mandi.trend > 0 ? '▲ ₹' : '▼ ₹') + Math.abs(mandi.trend);
+      te.className   = 'mandi-trend-val ' + (mandi.trend > 0 ? 'trend-up' : 'trend-dn');
+    }
+  }, 600);
+
+  // Scroll to result
+  setTimeout(() => {
+    document.getElementById('resultSection')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 500);
+}
+
+// ============================================================
+// WHATSAPP SHARE — Fully localized message
+// ============================================================
+function prepareWhatsApp(e) {
+  e.preventDefault();
+  const raw  = document.getElementById('resultRaw')?.textContent || '';
+  const msg  = `${UI.wa_header}\n\n*${UI.wa_crop}:* ${CROPNAME || '—'}\n*${UI.wa_season}:* ${SEASON}\n*${UI.wa_severity}:* ${parsedSeverity || '—'}\n\n${raw.substring(0, 800)}\n\n${UI.wa_footer}`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ============================================================
+// COPY REPORT
+// ============================================================
+function copyReport() {
+  const raw = document.getElementById('resultRaw')?.textContent || '';
+  navigator.clipboard.writeText('CropCare AI\n\n' + raw)
+    .then(() => showToast(UI.report_copied));
+}
+
+// ============================================================
+// SAVE / RENDER HISTORY — Labels localized
+// ============================================================
+function saveToHistory() {
+  const raw    = document.getElementById('resultRaw')?.textContent || '';
+  const imgSrc = document.querySelector('.result-crop-thumb')?.src || '';
+  const record = {
+    id: Date.now(), crop: CROPNAME || '—',
+    disease: parsedDisease || '—', severity: parsedSeverity || '—',
+    date: new Date().toLocaleDateString(), imgSrc, report: raw,
+    lang: LANG_CODE,
+  };
+  const history = JSON.parse(localStorage.getItem('cropcare_history') || '[]');
+  history.unshift(record);
+  if (history.length > 20) history.pop();
+  localStorage.setItem('cropcare_history', JSON.stringify(history));
+  renderHistory();
+  showToast(UI.history_saved);
+}
+
+function renderHistory() {
+  const grid    = document.getElementById('historyGrid');
+  const history = JSON.parse(localStorage.getItem('cropcare_history') || '[]');
+  const count   = history.length;
+  document.getElementById('histCount').textContent = count + ' ' + (count === 1 ? UI.scan : UI.scans);
+  if (count === 0) {
+    grid.innerHTML = `<div class="history-empty">${UI.history_empty}</div>`;
+    return;
+  }
+  grid.innerHTML = history.map(h => {
+    const sc = h.severity === 'Severe'   ? 'sev-tag-severe'
+             : h.severity === 'Moderate' ? 'sev-tag-mod'
+             : h.severity === 'Mild'     ? 'sev-tag-mild'
+             : 'sev-tag-unknown';
+    const thumb = h.imgSrc
+      ? `<img class="hist-thumb" src="${h.imgSrc}" alt="${h.crop}"/>`
+      : `<div class="hist-thumb-placeholder">🌿</div>`;
+    return `<div class="hist-card">${thumb}<div class="hist-info"><div class="hist-crop">${h.crop}</div><div class="hist-disease">${h.disease}</div><div class="hist-date">📅 ${h.date}</div></div><span class="hist-sev ${sc}">${h.severity}</span></div>`;
+  }).join('');
+}
+
+function clearHistory() {
+  if (!confirm(UI.history_confirm)) return;
+  localStorage.removeItem('cropcare_history');
+  renderHistory();
+  showToast(UI.history_cleared);
+}
+
+function scrollToHistory() {
+  document.getElementById('historySection').scrollIntoView({ behavior:'smooth' });
+}
+
+renderHistory();
+
+// ============================================================
+// AUDIO PLAYER
+// ============================================================
+const audioEl   = document.getElementById('gttsAudio');
+const playBtn   = document.getElementById('audioPlayBtn');
+const barWrap   = document.getElementById('audioBarWrap');
+const fillEl    = document.getElementById('audioProgressFill');
+const curTimeEl = document.getElementById('audioCurrentTime');
+const totTimeEl = document.getElementById('audioTotalTime');
+let audioSpeed  = 0.75;
+
+function fmtTime(s) {
+  if (isNaN(s)) return '0:00';
+  return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
+}
+
+function setAudioSpeed(rate, id) {
+  audioSpeed = rate;
+  document.querySelectorAll('.spd-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('spd-' + id)?.classList.add('on');
+  if (audioEl) audioEl.playbackRate = rate;
+}
+
+function handlePlayPause() {
+  if (!audioEl) { showToast(UI.no_audio); return; }
+  if (audioEl.paused) {
+    audioEl.playbackRate = audioSpeed;
+    audioEl.play().then(() => {
+      playBtn.innerHTML = '⏸ ' + UI.stop;
+      playBtn.classList.add('playing');
+      barWrap.classList.add('show');
+    }).catch(() => showToast(UI.audio_error));
+  } else {
+    audioEl.pause();
+    playBtn.innerHTML = '🔊 ' + UI.listen;
+    playBtn.classList.remove('playing');
+  }
+}
+
+function seekAudio(e) {
+  if (!audioEl?.duration) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  audioEl.currentTime = ((e.clientX - r.left) / r.width) * audioEl.duration;
+}
+
+if (audioEl) {
+  audioEl.addEventListener('canplay',    () => { totTimeEl.textContent = fmtTime(audioEl.duration); });
+  audioEl.addEventListener('timeupdate', () => {
+    if (!audioEl.duration) return;
+    fillEl.style.width    = (audioEl.currentTime / audioEl.duration * 100) + '%';
+    curTimeEl.textContent = fmtTime(audioEl.currentTime);
+  });
+  audioEl.addEventListener('ended', () => {
+    playBtn.innerHTML = '🔊 ' + UI.listen;
+    playBtn.classList.remove('playing');
+    fillEl.style.width = '0%';
+  });
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

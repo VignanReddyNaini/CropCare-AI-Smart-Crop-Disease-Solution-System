@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{{ ui.market_post_heading }}{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div style="max-width:620px;">
+
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem;">
+      <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#993c1d,#d85a30);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🛒</div>
+      <div>
+        <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--gray4);">{{ ui.market_post_heading }}</h2>
+        <p style="font-size:.8rem;color:var(--gray3);">Your listing will be visible to all farmers and buyers</p>
+      </div>
+    </div>
+
+    {% if user %}
+    <div style="background:var(--leaf-mist);border:1px solid var(--leaf-pale);border-radius:var(--r);padding:.75rem 1rem;margin-bottom:1.5rem;font-size:.82rem;color:var(--leaf);">
+      🧑‍🌾 Posting as <strong>{{ user.name }}</strong>
+      {% if user.role == 'producer' %}(Producer){% else %}(Buyer){% endif %}
+      · Contact pre-filled: {{ user.phone }}
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="lang" value="{{ lang }}"/>
+
+        <div class="two-col">
+          <div class="field">
+            <label class="field-label">{{ ui.market_post_type }} *</label>
+            <select name="type" class="field-select" required>
+              <option value="sell" {% if user and user.role == 'producer' %}selected{% endif %}>{{ ui.market_post_type_sell }}</option>
+              <option value="buy"  {% if user and user.role == 'consumer' %}selected{% endif %}>{{ ui.market_post_type_buy }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">{{ ui.market_post_category }} *</label>
+            <select name="category" class="field-select" required>
+              <option value="produce" selected>{{ ui.market_post_cat_produce }}</option>
+              <option value="input">{{ ui.market_post_cat_input }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">{{ ui.market_post_crop }} *</label>
+          <input type="text" name="crop" class="field-input" placeholder="e.g. Tomato, Rice, Cotton, DAP Fertilizer" required/>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label class="field-label">{{ ui.market_post_qty }}</label>
+            <input type="number" name="quantity" class="field-input" placeholder="e.g. 500" min="0" step="any"/>
+          </div>
+          <div class="field">
+            <label class="field-label">{{ ui.market_post_unit }}</label>
+            <select name="unit" class="field-select">
+              <option value="kg">kg</option>
+              <option value="quintal">quintal</option>
+              <option value="tonne">tonne</option>
+              <option value="bags">bags</option>
+              <option value="litre">litre</option>
+              <option value="pieces">pieces</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">{{ ui.market_post_price }} <span style="font-weight:400;color:var(--gray3);">(leave 0 for negotiable)</span></label>
+          <input type="number" name="price" class="field-input" placeholder="e.g. 25 (per unit)" min="0" step="any" value="0"/>
+        </div>
+
+        <div class="field">
+          <label class="field-label">{{ ui.market_post_location }} *</label>
+          <input type="text" name="location" class="field-input"
+            value="{{ user.village or '' }}" placeholder="e.g. Warangal" required/>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label class="field-label">{{ ui.market_post_district }}</label>
+            <input type="text" name="district" class="field-input"
+              value="{{ user.district or '' }}" placeholder="e.g. Rangareddy"/>
+          </div>
+          <div class="field">
+            <label class="field-label">{{ ui.market_post_state }}</label>
+            <input type="text" name="state" class="field-input"
+              value="{{ user.state or '' }}" placeholder="e.g. Telangana"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">{{ ui.market_post_contact }} *</label>
+          <input type="tel" name="contact" class="field-input"
+            value="{{ user.phone or '' }}" placeholder="10-digit mobile" maxlength="10" required/>
+        </div>
+
+        <div class="field">
+          <label class="field-label">{{ ui.market_post_desc }}</label>
+          <textarea name="description" class="field-textarea" placeholder="Quality details, packing type, available from date, etc."></textarea>
+        </div>
+
+        <div class="field">
+          <label class="field-label">{{ ui.market_post_image }}</label>
+          <input type="file" name="image" accept="image/*" style="padding:.5rem;"/>
+          <span style="font-size:.7rem;color:var(--gray3);">JPG, PNG or WEBP · Max 5MB</span>
+        </div>
+
+        <div style="display:flex;gap:.75rem;align-items:center;">
+          <button type="submit" class="btn btn-primary">{{ ui.market_post_submit }}</button>
+          <a href="/market?lang={{ lang }}" class="btn btn-secondary">← Cancel</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
